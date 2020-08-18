@@ -269,7 +269,7 @@
 
 (define (find-divisor n test)
 	(cond ((> (square test) n) n)
-				((divides test n) test)
+				((divides n test) test)
 				(else (find-divisor n (+ 1 test)))
 	)
 )
@@ -300,5 +300,91 @@
 	(cond ((= times 0) true)
 				((fermat-test n) (fast-prime? n (- times 1)))
 				(else false)
+	)
+)
+
+;; Exercise 1.22
+;; Print Time while performing the function below
+
+(define (timed-prime-test n)
+	(newline)
+	(display n)
+	(start-prime-test n (runtime))
+	(newline)
+)
+
+(define (start-prime-test n start-time)
+	(if (prime? n)
+		(report-prime (- (runtime) start-time))
+	)
+)
+(define (report-prime elapsed-time)
+	(display " *** ")
+	(display elapsed-time)
+)
+
+(define (search-for-primes start end)
+	(if (even? start)
+		(search-for-primes (+ 1 start) end)
+		(find-three-primes start end 0 (runtime))
+	)
+)
+
+(define (find-three-primes start end count time)
+	(cond ((>= start end) 
+					(display "could not find three primes")
+				)
+				((= count 3) 
+						(display "*** final time ***")
+						(newline)
+						(display (- (runtime) time))
+						(newline)
+				)
+				((prime2 start) 
+					(newline)
+					(display "Found Prime Number \n")
+					(display start)
+					(newline)
+					(find-three-primes (+ 2 start) end (+ 1 count) time)
+				)
+				(else (find-three-primes (+ 2 start) end count time))
+	)
+)
+
+;; Exercise 1.23
+
+(define (next-odd n) 
+	(if (= n 2)
+		3 
+		(+ n 2)
+	)
+)
+
+(define (new-smallest-divisor n)
+	(new-find-divisor n 2)
+)
+
+(define (new-find-divisor n test)
+	(cond ((> (square test) n) n)
+				((divides n test) test)
+				(else (new-find-divisor n (next-odd test)))
+	)
+)
+
+(define (prime2 n) (= n (new-smallest-divisor n)))
+
+
+;; Exercise 1.24
+
+(define (timed-prime-test-2 n)
+	(newline)
+	(display n)
+	(start-prime-test-2 n (runtime))
+	(newline)
+)
+
+(define (start-prime-test-2 n time)
+	(if ((fast-prime? n 100))
+			(report-prime (- (runtime) time))
 	)
 )
