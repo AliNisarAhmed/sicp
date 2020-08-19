@@ -388,3 +388,122 @@
 			(report-prime (- (runtime) time))
 	)
 )
+
+;; Ex: 1.27
+
+(define (carmichael n)
+	(define (apply-expmod start end)
+		(cond ((>= start end) true)
+					((= (expmod start end end) start) (apply-expmod (+ 1 start) end))
+					(else false)
+		)
+	)
+	(apply-expmod 1 n)
+)
+
+;; Exercise 1.28
+
+; (define (expmod base expo m)
+; 	(cond ((= expo 0) 1)
+; 				((even? expo)
+; 					(mod (square (expmod base (/ expo 2) m)) m)
+; 				)
+; 				(else (mod (* base (expmod base (- expo 1) m)) m))
+; 	)
+; )
+
+(define (expmod2 base e m)
+	(cond ((= e 0) 1)
+				((even? e)
+					(cond ((= base 1) 0)
+								((= base (- m 1)) 0)
+								((= ))
+					)
+				)
+				(else (mod (* base (expmod2 base (- e 1) m))))
+	)
+)
+
+;; --------------------
+
+
+;; Section 1.3
+
+(define (cube x)
+	(* x (* x x))
+)
+
+;; sum of integers from a thru b
+(define (sum-ints a b)
+	(if (> a b)
+		0
+		(+ a (sum-ints (+ 1 a) b))
+	)
+)
+
+;; sum of cube of ints from a thru b
+(define (sum-cubes a b)
+	(if (> a b)
+		0
+		(+ (cube a) (sum-cubes (+ 1 a) b))
+	)
+)
+
+;; sum of sequence 1/(1x3) + 1/(5x7) + 1/(9x11) + ... = pi / 8
+
+(define (pi-sum a b)
+	(if (> a b)
+		0 
+		(+ (/ 1.0 (* a (+ a 2))) (pi-sum (+ a 4) b))
+	)
+)
+
+
+;; The above three functions have the same pattern, i.e. summation
+
+(define (sum term a next b)
+	(if (> a b)
+		0
+		(+ (term a) (sum term (next a) next b))
+	)
+)
+
+;; now we can define the three functions using the sum functions
+
+(define (id x) x)
+
+(define (inc x) (+ x 1))
+
+(define (sum-ints2 a b)
+	(sum id a inc b)
+)
+
+(define (pi-sum2 a b)
+	(define (pi-term x) (/ 1.0 (* x (+ x 2))))
+	(define (pi-next y) (+ y 4))
+	(sum pi-term a pi-next b) 
+)
+
+(define (sum-cubes2 a b)
+	(sum cube a inc b)
+)
+
+(define (integral f a b dx)
+	(define (add-dx x)
+		(+ x dx)
+	)
+	(* (sum f (+ a (/ dx 2.0)) add-dx b) 
+		dx
+	)
+)
+
+
+;; Exercise 1.29
+
+(define (simpson f a b n)
+	(define (h) (/ (- b a) n))
+	(define (add-h x) (+ h x)) 
+	(* (/ h 3.0) 
+		(sum f a add-h n)
+	)
+)
