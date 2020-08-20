@@ -500,10 +500,192 @@
 
 ;; Exercise 1.29
 
+; (define (sum term a next b)
+; 	(if (> a b)
+; 		0
+; 		(+ (term a) (sum term (next a) next b))
+; 	)
+; )
+
 (define (simpson f a b n)
+	(define h (/ (- b a) n))
+	(define (yk k) (f (+ a (* h k))))
+	(define (simpson-term k)
+		(* (cond ((or (= k 0) (= k n)) 1)
+						 ((even? k) 2)
+						 (else 4)
+			 )
+			 (yk k)
+		)
+	)
+	(* (/ h 3) (sum simpson-term 0 inc n))
+)
+
+(define (simpson2 f a b n)
 	(define (h) (/ (- b a) n))
-	(define (add-h x) (+ h x)) 
+	(define (add-2h x) (+ (* 2 h) x))
 	(* (/ h 3.0) 
-		(sum f a add-h n)
+		(+ (f a)
+			 (* 4.0 (sum f (+ a h) add-2h b))
+			 (* 2.0 (sum f (add-2h a) add-2h (- b h)))
+			 (f b)
+		)
+	)
+)
+
+;; 1.30 
+
+; Iterative sum 
+
+(define (sum-iter term a next b)
+	(define (iter a result)
+		(if (> a b)
+			result
+			(iter (next a) (+ result (term a)))
+		)
+	)
+	(iter a 0)
+)
+
+;; 1.31 
+
+;; (a)
+
+(define (product term a next b)
+	(if (> a b)
+		1		
+		(* (term a) (product term (next a) next b))
+	)
+)
+
+(define (fact-prod n)
+	(product id 1 inc n)
+)
+
+(define (pi-approx end)
+	(define (next-term a) 
+		(/ (* a (+ a 2)) (* (+ 1 a) (+ 1 a)))
+	)
+	(define (add2 x) (+ x 2))
+	(* 4 
+		(product next-term 2 add2 end)
+	)
+)
+
+;; 1.31 (b)
+
+(define (product-iter term a next b)
+	(define (iter a result)
+		(if (> a b)
+			result
+			(iter (next a) (* result (term a)))
+		)
+	)
+	(iter a 1)
+)
+
+;; 1.32 (a)
+
+(define (accumulate combiner null-value term a next b)
+	(if (> a b)
+		null-value
+		(combiner (term a) (accumulate combiner null-value term (next a) next b))
+	)
+)
+
+(define (sum-acc term a next b)
+	(accumulate + 0 term a next b)
+)
+
+(define (prod-acc term a next b)
+	(accumulate * 1 term a next b)
+)
+
+;; 1.32 (b)
+
+(define (acc-iter combiner null term a next b)
+	(define (iter a result)
+		(if (> a b)
+			result
+			(iter (next a) (combiner result (term a)))
+		)
+	)
+	(iter a null)
+)
+
+(define (sum-acc-iter term a next b)
+	(acc-iter + 0 term a next b)
+)
+
+(define (prod-acc-iter term a next b)
+	(acc-iter * 1 term a next b)
+)
+
+
+;; 1.33 
+
+(define (filtered-acc combiner null term a next b pred)
+	(cond ((> a b) null)
+				((pred a) 
+					(combiner 
+						(term a) 
+						(filtered-acc combiner null term (next a) next b pred)
+					)
+				)
+				(else (filtered-acc combiner null term (next a) next b pred))
+	)	
+)
+
+(define (sum-sqr-primes a b)
+	(filtered-acc + 0 square a inc b prime?)
+)
+
+(define (prod-rel-prime n)
+	(define (pred i) 
+		(= (gcd i n) 1)
+	)
+	(filtered-acc * 1 id 1 inc n pred)
+)
+
+;; Section 1.33
+
+; representing f(x,y) = x(1+xy)^2 + y(1-y) + (1+xy)(1-y)
+
+;; a = 1 + xy
+;; b = 1 - y
+;; f(x,y) = xa^2 + yb + ab
+
+(define (f x y)
+	(define (f-helper a b)
+		(+ (* x (square a))
+		   (* y b)
+			 (* a b)
+		)
+	)
+	(f-helper (+ 1 (* x y))
+						(- 1 y)
+	)
+)
+
+(define (f2 x y)
+	( (lambda (a b)
+			(+ (* x (square a))
+				 (* y b)
+				 (* a b)
+			)
+		)
+		(+ 1 (* x y))
+		(- 1 y)
+	)
+)
+
+(define (f3 x y)
+	(let ( (a (+ 1 (* x y)))
+			   (b (- 1 y)) 
+			 )
+		(+ (* x (square a))
+			 (* y b)
+			 (* a b)
+		)
 	)
 )
