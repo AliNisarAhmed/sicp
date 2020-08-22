@@ -701,8 +701,8 @@
 		(if (close-enough? neg-point pos-point)
 			midpoint
 			(let ((test-value (f midpoint)))
-				(cond ((positive? test-value) (search f neg-point))
-							((negative? test-value) (search f pos-point))
+				(cond ((positive? test-value) (search f neg-point midpoint))
+							((negative? test-value) (search f midpoint pos-point))
 							(else midpoint)
 				)
 			)
@@ -726,16 +726,22 @@
 	)
 )
 
-(define tolerance 0.00001)
+(define tolerance 0.00000000001)
 (define (fixed-point f first-guess)
 	(define (close-enough v1 v2)
 		(< (abs (- v1 v2)) tolerance)
 	)
 	(define (try guess)
 		(let ((next (f guess)))
-			(if (close-enough guess next)
-				next
-				(try next)
+			(cond ((close-enough guess next)
+							(display "guess was: ")
+							(display guess)
+							(newline)
+							(display "next up: ")
+							(display next)
+							next
+						)
+						(else (try next))
 			)
 		)
 	)
@@ -748,6 +754,32 @@
 
 ;; Exercise 1.35
 
-(define golden-ratio 
-	(fixed-point (lambda (y) (+ 1 (/ 1 y))) 1.0)
+;; This does not work, just use from fixed-point onwards
+; (define golden-ratio 
+; 	(fixed-point (lambda (y) (+ 1 (/ 1 y))) 1.0)
+; )
+
+;; Exercise 1.36
+
+(define (x-power-x y)
+	(fixed-point (lambda (x) (/ (log y) (log x))) 2.0)
+)
+
+;; Exercise 1.37
+
+(define (cont-frac n d k)
+	(if (= k 0)
+		0 
+		(let ((nk (n k))
+				  (dk (d k))) 
+			(/ nk (+ dk (cont-frac n d (- k 1))))
+		)
+	)
+)
+
+(define (cont-frac-iter n d k)
+	(define (iter index k result) 
+	
+	)
+	(iter)
 )
