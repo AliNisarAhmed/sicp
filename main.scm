@@ -748,9 +748,9 @@
 	(try first-guess)
 )
 
-(define (sqrt-2 x)
-	(fixed-point (lambda (y) (average y (/ x y))) 1.0)
-)
+; (define (sqrt-2 x)
+; 	(fixed-point (lambda (y) (average y (/ x y))) 1.0)
+; )
 
 ;; Exercise 1.35
 
@@ -767,6 +767,7 @@
 
 ;; Exercise 1.37
 
+;; This is wrong - k is going from k to 1, instead of 1 to k !!!
 (define (cont-frac n d k)
 	(if (= k 0)
 		0 
@@ -777,9 +778,251 @@
 	)
 )
 
-(define (cont-frac-iter n d k)
-	(define (iter index k result) 
-	
+(define (cont-frac-rec n d k)
+	(define (rec m)
+		(if (= m k)
+			(/ (n m) (d m))
+		  (/ (n m) (+ (d m) (rec (+ 1 m))))
+		)
 	)
-	(iter)
+	(rec 1)
+)
+
+;; Exercise 1.37 (b)
+
+(define (one i) 1.0)
+
+(define (cont-frac-2 n d k)
+	(define (iter nterm dterm k)
+		(let ((nk-1 (n (- k 1)))
+				 )
+			(if (= k 1)
+				(/ nterm dterm)
+				(iter (n (- k 2)) (+ (d (- k 2)) (/ nterm dterm)) (- k 1))
+			)
+		)
+	)
+	(iter (n k) (d k) k)
+)
+
+
+;; Exercise 1.38
+
+(define (divided-by-3 x) (= (mod x 3 ) 0))
+
+(define (e-2 k)
+	(/ 1 
+		(+ 1 (cont-frac-2 one euler-seq k))
+	)
+)
+
+(define (euler-seq i)
+	(if (divided-by-3 i)
+		(* 2 (expt 2 (/ i 3)))
+		1 
+	)
+)
+
+
+;; Exercise 1.39
+
+(define (tan-cf x k)
+	(define (rec m)
+		(let ((di (+ m (- m 1)))
+				 )
+			(if (= m k)
+				di
+				(- di (/ (square x) (rec (+ m 1))))
+			)
+		)
+	)
+	(/ x (rec 1))
+)
+
+;; -----------------
+
+;; Section 1.3.4
+
+(define (avg-damp f)
+	(lambda (x) (average x (f x)))
+)
+
+(define (sqrt-2 x)
+	(fixed-point (avg-damp (lambda (y) (/ x y))) 1.0)
+)
+
+(define (cube-root-2 x)
+	(fixed-point (avg-damp (lambda (y) (/ x (square y)))) 1.0)
+)
+
+(define dx 0.00001)
+
+(define (deriv g)
+	(lambda (x) (/ (- (g (+ x dx)) (g x)) dx))
+)
+
+(define (cube x) (* x x x))
+
+(define (newton-transform g)
+	( lambda (x) (- x (/ (g x) ((deriv g) x))) )
+)
+
+(define (newtons-method g guess)
+	(fixed-point (newton-transform g) guess)
+)
+
+(define (sqrt-n x)
+	(newtons-method 
+		(lambda (y) (- (square y) x))
+		1.0
+	)
+)
+
+;; ---- fixed point of transforms ----
+
+(define (fixed-point-of-transform g transform guess)
+	(fixed-point (transform g) guess)
+)
+
+(define (sqrt-t x) 
+	(fixed-point-of-transform
+		(lambda (y) (/ x y))
+		avg-damp
+		1.0
+	)
+)
+
+(define (sqrt-n2 x)
+	(fixed-point-of-transform
+		(lambda (y) (- (square y) x))
+		newton-transform
+		1.0
+	)
+)
+
+;; Exercise 1.40 
+
+(define (cubic a b c)
+	(lambda (x) (+ (cube x) (* a (square x)) (* b x) c))
+)
+
+;; Exercise 1.41
+
+(define (double-f f)
+	(lambda (x) (f (f x)))
+)
+
+;; Exercise 1.42
+
+(define (compose f g)
+	(lambda (x) (f (g x)))
+)
+
+;; Exercise 1.43
+
+(define (repeated f n)
+	(if (= n 0)
+		id
+		(compose f (repeated f (- n 1)))
+	)
+)
+
+;; Exercise 1.44
+
+(define (smooth f)
+	(lambda (x) (/ 
+								(+ (f (- x dx)) (f x) (f (+ x dx)) ) 
+								3
+							)
+	)
+)
+
+(define (smooth-n f n)
+	((repeated smooth n) f)
+)
+
+
+;; Exercise 1.45 
+
+; (define (sqrt-2 x)
+; 	(fixed-point (avg-damp (lambda (y) (/ x y))) 1.0)
+; )
+
+; (define (cube-root-2 x)
+; 	(fixed-point (avg-damp (lambda (y) (/ x (square y)))) 1.0)
+; )
+
+(define (forth-root x)
+	(fixed-point (avg-damp (avg-damp (lambda (y) (/ x (cube y)))) ) 1.0)
+)
+
+(define (forth-root2 x)
+	(define g 
+		(lambda (y) (/ x (cube y)))
+	)
+	(fixed-point ((repeated avg-damp 2) g) 1.0)
+)
+
+(define (fifth-root x)
+	(define g 
+		(lambda (y) (/ x (expt y 4)))
+	)
+	(fixed-point ((repeated avg-damp 2) g) 1.0)
+)
+
+(define (sixth-root x)
+	(define g 
+		(lambda (y) (/ x (expt y 5)))
+	)
+	(fixed-point ((repeated avg-damp 2) g) 1.0)
+)
+
+(define (eighth-root x)
+	(define g
+		(lambda (y) (/ x (expt y 7)))
+	)
+	(fixed-point ((repeated avg-damp 2) g) 1.0)
+)
+
+(define (nth-root n x)
+	(define g
+		(lambda (y) (/ x (expt y (- n 1))))
+	)
+	(define (log2 x)
+		(/ (log x) (log 2))
+	)
+	(fixed-point ((repeated avg-damp (floor (log2 n))) g) 1.0)
+)
+
+;; Exercise 1.46
+
+(define (iterative-improve good-enough improve)
+	(lambda (first-guess)
+		(define (iter guess)
+			(if (good-enough guess)
+				guess
+				(iter (improve guess))
+			)
+		)
+		(iter first-guess)
+	)
+	
+)
+
+(define (good-enough2 guess next)
+	(< (abs (- next guess)) tolerance)
+)
+
+(define (sqrt-improve x)
+		(
+			(iterative-improve 
+				(lambda (y) (< (abs (- (square y) x)) tolerance) ) 
+				(lambda (y) (average y (/ x y)))
+			) 
+			1.0
+		)
+)
+
+(define (fixed-point-improve f first-guess)
+	((iterative-improve (lambda (x) (close-enough2 f (f x))) f) first-guess)
 )
