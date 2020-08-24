@@ -12,3 +12,9 @@
 )
 
 (define (logn n m) (/ (log m) (log n)))
+
+(define (id x) x)
+
+(define (add-100 n) (+ n 100))
+
+(define (compose f g) (lambda (x) (f (g x))))
