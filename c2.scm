@@ -99,8 +99,8 @@
 (define (negate-interval y)
   (make-interval (* -1 (upper-bound y)) (* -1 (lower-bound y))))
 
-(define i1 (make-interval 4 10))
-(define i2 (make-interval 2 12))
+(define i1 (make-interval -4 -10))
+(define i2 (make-interval -2 -12))
 (define diff (sub-interval i1 i2))
 
 
@@ -131,37 +131,67 @@
         (h1 (upper-bound i1))
         (l2 (lower-bound i2))
         (h2 (upper-bound i2)))
-    (cond ((and (> l1 0) (> h1 0) (> l2 0) (> h2 0)) (make-interval (* l1 l2) (* h1 h2)))
-          
-          (else (make-interval (* h1 h1) (* h2 h2))))))
+    (cond ((and (>= l1 0) (>= h1 0) (>= l2 0) (>= h2 0)) (make-interval (* l1 l2) (* h1 h2)))
+          ((and (< l1 0) (< h1 0) (< l2 0) (< h2 0)) (make-interval (* l1 l2) (* h1 h2)))
+          ((and (>= l1 0) (>= h1 0))
+           (cond ((>= l2 0) (make-interval (* l1 l2) (* h1 l2)))
+                 ((>= h2 0) (make-interval (* l1 h2) (* h1 h2)))
+                 (else (make-interval (* h1 l2) (* l1 h2)))))
+          ((and (<= l1 0) (<= h1 0))
+           (cond ((<= l2 0) (make-interval (* l1 l2) (* h1 l2)))
+                 ((<= h2 0) (make-interval (* l1 h2) (* h1 h2)))
+                 (else (make-interval (* l1 h2) (* l2 h1)))
+                 ))
+          ((and (>= h2 0) (>= l2 0))
+           (cond ((>= l1 0) (make-interval (* l1 l2) (* l1 h2)))
+                 ((>= h1 0) (make-interval (* h1 l2) (* h1 h2)))))
+          (else
+           (let ((p1 (* l1 l2))
+                 (p2 (* l1 h2))
+                 (p3 (* h1 l2))
+                 (p4 (* h1 h2)))
+             (make-interval (min p1 p2 p3 p4) (min p1 p2 p3 p4)))))))
 
 
+;; Exercise 2.12
+
+(define (make-center-width c w)
+  (make-interval (- c w) (+ c w)))
+
+(define (center cw)
+  (/ (+ (lower-bound cw) (upper-bound cw)) 2.0))
+
+(define (width-cw cw)
+  (/ (- (upper-bound cw) (lower-bound cw)) 2.0))
 
 
+(define cw1 (make-center-width 10 2))
 
 
+(define (make-center-percent c p)
+  (make-interval (- c (* c (/ p 100.0))) (+ c (* c (/ p 100.0)))))
 
 
+(define cp1 (make-center-percent 80 0.5))
+
+(define (percent-of-interval cp)
+  (let ((c (center cp)))
+    (* (/ (- (upper-bound cp) c) c) 100)))
 
 
+;; Exercise 2.13
 
+(define a1 (make-center-percent 20 0.5))
 
+(define a2 (make-center-percent 20 0.4))
 
+(define prod-a1-a2 (mul-interval a1 a2)) ;; ( 396.408, 403.608 )
 
+(define (percent-tolerance i)
+  (* (/ (width-cw i) (center i)) 100))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+(define percent-tol-a1-a2 (percent-tolerance prod-a1-a2))
+;; The above is 0.89998 which is approx 0.5 + 0.4 ~ 0.9
 
 
 
