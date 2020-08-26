@@ -110,8 +110,30 @@
   (/ (- (upper-bound i) (lower-bound i)) 2))
 
 
+;; Exercise 2.10
+
+(define (mul-inverse i)
+  (let ((x (lower-bound i))
+        (y (upper-bound i)))
+    (if (or (= x 0) (= y 0))
+        (error "Inverse of second interval is not possible, division by zero")
+        (make-interval (/ 1.0 x) (/ 1.0 y)))))
+
+(define (div-interval-2 i1 i2)
+  (let ((inv (mul-inverse i2)))
+    (mul-interval i1 inv)))
 
 
+;; Exercise 2.11
+
+(define (mult-interval-2 i1 i2)
+  (let ((l1 (lower-bound i1))
+        (h1 (upper-bound i1))
+        (l2 (lower-bound i2))
+        (h2 (upper-bound i2)))
+    (cond ((and (> l1 0) (> h1 0) (> l2 0) (> h2 0)) (make-interval (* l1 l2) (* h1 h2)))
+          
+          (else (make-interval (* h1 h1) (* h2 h2))))))
 
 
 
