@@ -117,7 +117,7 @@
         (y (upper-bound i)))
     (if (or (= x 0) (= y 0))
         (error "Inverse of second interval is not possible, division by zero")
-        (make-interval (/ 1.0 x) (/ 1.0 y)))))
+        (make-interval (/ 1.0 y) (/ 1.0 x)))))
 
 (define (div-interval-2 i1 i2)
   (let ((inv (mul-inverse i2)))
@@ -194,8 +194,155 @@
 ;; The above is 0.89998 which is approx 0.5 + 0.4 ~ 0.9
 
 
+;; Exercise 2.14
+
+(define (par1 r1 r2)
+  (div-interval (mul-interval r1 r2)
+                (add-interval r1 r2)))
+
+(define (par2 r1 r2)
+  (let ((one (make-interval 1 1)))
+    (div-interval
+     one (add-interval (div-interval one r1) (div-interval one r2)))))
 
 
+
+(define pc1 (make-center-percent 100 20))
+(define pc2 (make-center-percent 80 15))
+(define one-int (make-interval 1 1))
+
+
+
+
+;; ---- Lists ----
+
+(define one-to-four (list 1 2 3 4))
+
+
+
+(define (list-ref items n)
+  (if (= n 0)
+      (car items)
+      (list-ref (cdr items) (- n 1))))
+
+
+(define (length items)
+  (if (null? items)
+      0
+      (+ 1 (length (cdr items)))))
+
+
+(define odds (list 1 3 5 7))
+
+
+(define (append list1 list2)
+  (if (null? list1)
+      list2
+      (cons (car list1) (append (cdr list1) list2))))
+
+
+;; Exercise 2.17
+
+(define (last-pair items)
+  (let ((remaining (cdr items)))
+    (if (null? remaining)
+        (car items)
+        (last-pair (cdr items)))))
+
+
+;; Exercise 2.18
+
+
+(define (reverse items)
+  (let ((remaining (cdr items)))
+    (if (null? remaining)
+        items
+        (append (reverse remaining) (list (car items))))))
+
+
+;; Exercise 2.19
+
+(define (cc amount coin-values)
+  (cond ((= amount 0) 1)
+        ((or (< amount 0) (no-more? coin-values) 0))
+        (else
+         (+ (cc amount (except-first-denomination coin-values))
+            (cc (- amount (first-denomination coin-values)) (coin-values) )))))
+
+
+
+(define (no-more? items)
+ (null? items))
+
+(define (except-first-denomination items)
+  (cdr items))
+
+(define (first-denomination items)
+  (car items))
+
+
+(define us-coins (list 50 25 10 5 1))
+(define uk-coins (list 100 50 20 10 5 2 1 0.5))
+
+
+
+;; Exercise 2.20
+
+(define (filter f items)
+  (define (iter new-items old-items)
+    (cond ((null? old-items) new-items)
+          ((f (car old-items)) (iter (append new-items (list (car old-items))) (cdr old-items)))
+          (else (iter new-items (cdr old-items)))))
+  (iter '() items)
+  )
+
+(define (same-parity . items)
+  (let ((first (car items)))
+    (if (even? first)
+        (filter even? items)
+        (filter odd? items))))
+
+
+;; Exercise 2.21
+
+(define (square-list items)
+  (if (null? items)
+      nil
+      (cons (square (car items)) (square-list (cdr items)))))
+
+(define (square-list-2 items)
+  (map square items))
+
+
+;; Exercise 2.22
+
+(define (for-each f items)
+  (cond ((null? items) (newline))
+        (else (f (car items))
+              (for-each f (cdr items)))))
+
+
+(define (print-newline items)
+  (for-each (lambda (x)
+              (newline)
+              (display x)) items))
+
+
+;; Exercise 2.25
+
+(define (count-leaves items)
+  (cond ((null? items) 0)
+        ((not (pair? items)) 1)
+        (else (+ (count-leaves (car items)) (count-leaves (cdr items)) )) ))
+
+(define x (cons (list 1 2) (list 3 4)))
+
+(define x1 (list 1 3 (list 5 7) 9))
+(define x2 (list (list 7)))
+(define x3 (list 1 (list 2 (list 3 (list 4 (list 5 (list 6 7)))))))
+
+(define a (list 1 2 3))
+(define b (list 4 5 6))
 
 
 

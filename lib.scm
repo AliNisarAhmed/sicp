@@ -18,3 +18,9 @@
 (define (add-100 n) (+ n 100))
 
 (define (compose f g) (lambda (x) (f (g x))))
+
+(define (even? x) (divides? x 2))
+
+(define (odd? x) (not (divides? x 2)))
+
+(define (square x) (* x x))
