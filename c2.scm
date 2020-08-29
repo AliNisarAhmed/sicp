@@ -345,6 +345,121 @@
 (define b (list 4 5 6))
 
 
+;; Exercise 2.27
+
+
+(define (deep-reverse items)
+  (cond ((null? items) nil)
+        (else (let ((first (car items))
+                    (rest (cdr items)))
+                (if (pair? first)
+                    (append (deep-reverse rest) (list (deep-reverse first)))
+                    (append (deep-reverse rest) (list first)))))))
+
+
+(define d1 (list (list 1 2) (list 3 4) (list 5 6) (list 7 8)))
+
+
+;; Exercise 2.28
+
+(define (fringe tree)
+  (if (null? tree)
+      nil
+      (let ((first (car tree))
+            (rest (cdr tree)))
+        (if (pair? first)
+            (append (fringe first) (fringe rest))
+            (cons first (fringe rest))))))
+
+(define my-tree (list 1 (list 2 (list 3 4) (list 5 6)) (list 7 (list 8))))
+
+
+(define (fringe-iter tree)
+  (define (iter items result)
+    (cond ((null? items) result)
+          ((pair? items) (iter (car items) (iter (cdr items) result)))
+          (else (cons items result))))
+  (iter tree nil))
+
+
+;; Exercise 2.29
+
+(define (make-mobile left right)
+  (list left right))
+
+
+(define (make-branch len structure)
+  (list len structure))
+
+
+(define (left-branch mobile)
+  (car mobile))
+
+(define (right-branch mobile)
+  (cadr mobile))
+
+
+
+(define (branch-length br) (car br))
+
+(define (branch-structure br) (cadr br))
+
+
+(define m1 (make-mobile (make-branch 2 20) (make-branch 3 30)))
+(define m2 (make-mobile (make-branch 4 40) (make-branch 5 50)))
+(define m3 (make-mobile (make-branch 6 m1) (make-branch 7 m2)))
+
+;; (b)
+
+
+(define (total-weight-m mobile)
+  (let ((left (left-branch mobile))
+        (right (right-branch mobile)))
+    (cond ((and (pair? (branch-structure left)) (pair? (branch-structure right)))
+           (+ (total-weight (branch-structure left)) (total-weight (branch-structure right))))
+          ((pair? (branch-structure left))
+           (+ (total-weight (branch-structure left)) (branch-structure right) ))
+          ((pair? (branch-structure right))
+           (+ (branch-structure left) (total-weight (branch-structure right))))
+          (else (+ (branch-structure left) (branch-structure right))))))
+
+(define (total-weight m)
+  (cond ((null? m) 0)
+        ((not (pair? m)) m)
+        (else (+
+               (total-weight (branch-structure (left-branch m)))
+               (total-weight (branch-structure (right-branch m)))))))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
