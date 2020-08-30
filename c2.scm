@@ -34,7 +34,7 @@
   (let ((odd-part(iter z)))
     (round (logn 3 odd-part))))
 
-(define v1 (cons-non-neg 4 5))
+(define v1-2 (cons-non-neg 4 5))
 
 ;; Exercise 2.6
 
@@ -387,10 +387,8 @@
 (define (make-mobile left right)
   (list left right))
 
-
 (define (make-branch len structure)
   (list len structure))
-
 
 (define (left-branch mobile)
   (car mobile))
@@ -398,19 +396,16 @@
 (define (right-branch mobile)
   (cadr mobile))
 
-
-
 (define (branch-length br) (car br))
 
 (define (branch-structure br) (cadr br))
 
 
-(define m1 (make-mobile (make-branch 2 20) (make-branch 3 30)))
-(define m2 (make-mobile (make-branch 4 40) (make-branch 5 50)))
-(define m3 (make-mobile (make-branch 6 m1) (make-branch 7 m2)))
+(define m1 (make-mobile (make-branch 2 20) (make-branch 2 20)))
+(define m2 (make-mobile (make-branch 4 40) (make-branch 4 40)))
+(define m3 (make-mobile (make-branch 6 m1) (make-branch 6 m2)))
 
 ;; (b)
-
 
 (define (total-weight-m mobile)
   (let ((left (left-branch mobile))
@@ -430,40 +425,230 @@
                (total-weight (branch-structure (left-branch m)))
                (total-weight (branch-structure (right-branch m)))))))
 
+;; c
+
+(define (torque branch) (* (branch-length branch) (branch-structure branch)))
+
+;;(define (balanced? mobile)
+  ;;(if (not (pair? mobile))
+    ;;  true
+      ;;()))
+
+
+;; Exercise 2.30
+
+(define (square-tree tree)
+  (cond ((null? tree) nil)
+        ((not (pair? tree)) (square tree))
+        (else (cons (square-tree (car tree)) (square-tree (cdr tree))))
+        ))
+
+(define (square-tree-map tree)
+  (map (lambda (subtree)
+              (if (pair? subtree)
+                  (square-tree-map subtree)
+                  (square subtree)))
+       tree))
+
+(define t1 (list 1 (list 2 (list 3 4) 5) (list 6 7)))
+
+
+;; Exercise 2.31
+
+(define (tree-map f tree)
+  (map (lambda (subtree)
+         (if (pair? subtree)
+             (tree-map f subtree)
+             (f subtree)))
+       tree))
 
 
 
+;; Exercise 2.32
+
+(define (subsets s)
+  (if (null? s)
+      (list nil)
+      (let ((rest (subsets (cdr s))))
+        (append rest (map (lambda (x) (cons (car s) x)) rest)))))
 
 
 
+(define (sum-odd-squares-2 tree)
+  (cond ((null? tree) 0)
+        ((not (pair? tree))
+         (if (odd? tree) (square tree) 0))
+        (else (+
+               (sum-odd-squares (car tree))
+               (sum-odd-squares (cdr tree))))))
+
+
+(define (even-fibs-2 n)
+  (define (next k)
+    (if (> k n)
+        nil
+        (let ((f (fib k)))
+          (if (even? f)
+              (cons f (next (+ 1 k)))
+              (next (+ k 1))))))
+  (next 0))
+
+
+(define (accumulate op initial items)
+  (if (null? items)
+      initial
+      (op (car items) (accumulate op initial (cdr items)) )))
+
+(define (enumerate-interval low high)
+  (if (> low high)
+      nil
+      (cons low (enumerate-interval (+ 1 low) high))))
+
+(define (enumerate-tree tree)
+  (cond ((null? tree) nil)
+        ((not (pair? tree)) (list tree))
+        (else (append (enumerate-tree (car tree)) (enumerate-tree (cdr tree))))
+        ))
+
+(define (sum-odd-squares tree)
+  (accumulate
+   + 0
+   (map square (filter odd? (enumerate-tree tree)))))
+
+(define (even-fibs n)
+  (accumulate
+   cons
+   nil
+   (filter even? (map fib (enumerate-interval 0 n)))))
+
+
+(define (list-fib-squares n)
+  (accumulate
+   cons
+   nil
+   (map square (map fib (enumerate-interval 0 n)))))
+
+
+;; Exercise 2.33
+
+(define (my-map f items)
+  (accumulate (lambda (x y) (cons (f x) y)) nil items))
+
+(define (my-append seq1 seq2)
+  (accumulate cons seq2 seq1))
+
+(define (length-2 items)
+  (accumulate (lambda (x y) (+ 1 y)) 0 items))
 
 
 
+;; Exercise 2.34
+
+(define (horner-eval x coeff-list)
+  (accumulate (lambda (a acc) (+ (* acc x) a))
+              0
+              coeff-list))
+
+
+;; Exercise 2.35
+
+(define (count-leaves-2 t)
+  (accumulate (lambda (x y) (+ x y))
+              0
+              (map (lambda (item)
+                     (if (pair? item)
+                         (count-leaves-2 item)
+                         1))
+                   t)))
+
+;; Exercise 2.36
+
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      nil
+      (cons
+       (accumulate op init (map car seqs))
+       (accumulate-n op init (map cdr seqs)) )))
+
+(define list-of-list
+  (list
+   (list 1 2 3)
+   (list 4 5 6)
+   (list 7 8 9)
+   (list 10 11 12)))
+
+
+;; Exercise 2.37
+
+(define v1 (list 1 2 3 4))
+(define v2 (list 4 5 6 6))
+(define v3 (list 6 7 8 9))
+
+(define matrix
+  (list
+   v1
+   v2
+   v3))
+
+(define matrixA
+  (list
+   (list 4 0 1)
+   (list -2 2 -1)
+   (list 5 3 6)))
+
+(define matrixB
+  (list
+   (list 4 0)
+   (list 7 8)
+   (list 2 3)))
+
+;; v is vectors: a list of numbers
+;; w is a list of vectors (this w is a list of lists)
+
+(define (dot-product v w)
+  (accumulate + 0 (map * v w)))
+
+(define (matrix-x-vector m v)
+  (map (lambda (i) (dot-product i v)) m))
+
+(define (transpose m)
+  (accumulate-n cons nil m))
+
+(define (matrix-x-matrix m n)
+  (let ((cols (transpose n)))
+    (map (lambda (i) (matrix-x-vector cols i)) m)))
+
+
+;; Exercise 2.38
+
+(define (fold-right op init items)
+  (if (null? items)
+      init
+      (op (car items) (fold-right op init (cdr items)))))
+
+(define (fold-left op init items)
+  (define (iter result rest)
+    (if (null? rest)
+        result
+        (iter (op result (car rest)) (cdr rest))))
+  (iter init items))
+
+
+(define (fold-left-rec op init items)
+  (if (null? items)
+      init
+      (fold-left-rec op (op (car items) init) (cdr items))))
 
 
 
+;; Exercise 2.39
 
 
+(define (reverse-right items)
+  (fold-right (lambda (x acc) (append acc (list x))) nil items))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+(define (reverse-left items)
+  (fold-left (lambda (acc x) (cons x acc)) nil items))
 
 
