@@ -31,3 +31,19 @@
         b
         (iter (+ a b) a (- count 1))))
   (iter 1 0 n))
+
+
+;; Primality test
+
+(define (divides a b) (= 0 (remainder a b)))
+
+(define (find-divisor n test)
+	(cond ((> (square test) n) n)
+              ((divides n test) test)
+              (else (find-divisor n (+ 1 test)))
+	)
+)
+(define (smallest-divisor n) (find-divisor n 2))
+
+
+(define (prime? n) (= n (smallest-divisor n)))

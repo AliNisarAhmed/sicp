@@ -652,3 +652,111 @@
   (fold-left (lambda (acc x) (cons x acc)) nil items))
 
 
+
+;; Flatmap
+
+(define (flatmap f seq)
+  (accumulate append nil (map f seq)))
+
+
+(define (prime-sum? pair)
+  (prime? (+ (car pair) (cadr pair))))
+
+
+(define (make-pair-sum pair)
+  (list (car pair) (cadr pair) (+ (car pair) (cadr pair))))
+
+
+(define (prime-sum-pairs n)
+  (map make-pair-sum
+       (filter prime-sum?
+               (flatmap
+                (lambda (i)
+                  (map (lambda (j) (list i j)) (enumerate-interval 1 (- i 1))))
+                (enumerate-interval 1 n)))))
+
+
+(define (permutations s)
+  (if (null? s)
+      (list nil)
+      (flatmap (lambda (x) (map (lambda (p) (cons x p)) (permutations (remove x s))))
+               s)))
+
+(define (remove item items)
+  (filter (lambda (x) (not (= x item))) items))
+
+
+;; Exercise 2.40
+
+(define (unique-pairs n)
+  (flatmap (lambda (i) (map (lambda (j) (list i j)) (enumerate-interval 1 (- i 1))))
+           (enumerate-interval 1 n)))
+
+(define (prime-sum-pairs-2 n)
+  (map make-pair-sum
+       (filter prime-sum?
+               (unique-pairs n))))
+
+
+;; Exercise 2.41
+
+
+(define (unique-tuples n k)
+  (define (iter m k)
+    (if (= k 0)
+        (list nil)
+        (flatmap (lambda (j)
+                   (map (lambda (tuple) (cons j tuple))
+                        (iter (+ 1 j) (- k 1))))
+                 (enumerate-interval m n))))
+  (iter 1 k))
+
+(define (triples-of-sum s n)
+  (filter (lambda (seq) (= (accumulate + 0 seq)) s)
+          (unique-tuples n 3)))
+
+
+
+;; Exercise 2.42
+
+#|
+
+
+(define (queens board-size)
+  (define (queen-cols k)
+    (if (= k 0)
+        (list empty-board)
+        (filter (lambda (positions) (safe? k positions))
+                (flatmap (map (lambda (new-row)
+                                (adjoin-position new-row k rest-of-queens))
+                              (enumerate-interval 1 board-size))
+                         (queen-cols (- k 1))))))
+  (queen-cols board-size))
+
+
+|#
+
+
+(define (repeat n k)
+  (map (lambda (i) n) (enumerate-interval 1 k)))
+
+
+(define (generate-board n)
+  (map (lambda (k)
+         (enumerate-interval 1 n))
+       (enumerate-interval 1 n)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
