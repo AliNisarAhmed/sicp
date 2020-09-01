@@ -737,24 +737,95 @@
 |#
 
 
+(define (make-square row col q)
+  (list row col q))
+
+
+(define (get-row square)
+  (car square))
+
+(define (get-col square)
+  (cadr square))
+
+(define (get-queen square)
+  (caddr square))
+
+(define (put-queen square)
+  (make-square (get-row square) (get-col square) 1))
+
+
+(define (is-occupied? square)
+  (= (get-queen square) 1))
+
+
+;; -- Helpers --
+
 (define (repeat n k)
   (map (lambda (i) n) (enumerate-interval 1 k)))
 
 
 (define (generate-board n)
-  (map (lambda (k)
-         (enumerate-interval 1 n))
+  (map (lambda (row)
+         (map (lambda (col) (make-square row col 0))
+              (enumerate-interval 1 n)))
        (enumerate-interval 1 n)))
 
+(define empty-board (generate-board 3))
+
+
+(define (get-all-in-los sqr board)
+  (flatmap
+   (lambda (row)
+     (filter (lambda (square)
+               (is-in-los? sqr square))
+          row))
+   board))
+
+(define (is-in-los? origin target)
+  (let ((target-row (get-row target))
+        (target-col (get-col target))
+        (origin-row (get-row origin))
+        (origin-col (get-col origin)))
+     (or (= target-row origin-row)
+         (= target-col origin-col)
+         (= (- target-row target-col) (- origin-row origin-col))
+         (= (+ target-row target-col) (+ origin-row origin-col)))))
 
 
 
+(define (every f items)
+  (accumulate (lambda (x acc)
+                (if (equal? acc false)
+                    false
+                    (f x))) true items))
+
+
+;; ----  API ----
+
+(define (adjoin-position new-row kcol rest-of-queens)
+  (map (lambda (row)
+         (map (lambda (square)
+                (if (and (= (get-row square) new-row) (= (get-col square) kcol) )
+                    (put-queen square)
+                    square))
+              row))
+       rest-of-queens))
+
+
+(define (safe? col board)
+  (let ((queen (car (flatmap
+                     (lambda (row)
+                       (filter
+                        (lambda (s) (and (= (get-col s) col) (is-occupied? s)))
+                        board))
+                     board))))
+    (every (lambda (b) (equal? b true))
+           (get-all-in-los queen board))))
 
 
 
-
-
-
+(define b1 (adjoin-position 2 2 empty-board))
+(define b2 (adjoin-position 3 3 b1))
 
 
 
