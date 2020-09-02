@@ -719,22 +719,23 @@
 
 ;; Exercise 2.42
 
-#|
 
 
 (define (queens board-size)
   (define (queen-cols k)
     (if (= k 0)
         (list empty-board)
-        (filter (lambda (positions) (safe? k positions))
-                (flatmap (map (lambda (new-row)
-                                (adjoin-position new-row k rest-of-queens))
-                              (enumerate-interval 1 board-size))
-                         (queen-cols (- k 1))))))
-  (queen-cols board-size))
+        (filter
+         (lambda (positions) (safe? k positions))
+         (flatmap
+          (lambda (rest-of-queens)
+            (map (lambda (new-row)
+                   (adjoin-position
+                    new-row k rest-of-queens))
+                 (enumerate-interval 1 board-size)))
+          (queen-cols (- k 1))))))
+  (queen-cols board-size)
 
-
-|#
 
 
 (define (make-square row col q)
@@ -760,6 +761,7 @@
 
 ;; -- Helpers --
 
+
 (define (repeat n k)
   (map (lambda (i) n) (enumerate-interval 1 k)))
 
@@ -770,16 +772,20 @@
               (enumerate-interval 1 n)))
        (enumerate-interval 1 n)))
 
-(define empty-board (generate-board 3))
+
+(define empty-board (generate-board 4))
 
 
 (define (get-all-in-los sqr board)
   (flatmap
    (lambda (row)
      (filter (lambda (square)
-               (is-in-los? sqr square))
+               (and
+                (not (= (get-col sqr) (get-col square)))
+                (is-in-los? sqr square)))
           row))
    board))
+
 
 (define (is-in-los? origin target)
   (let ((target-row (get-row target))
@@ -802,6 +808,7 @@
 
 ;; ----  API ----
 
+
 (define (adjoin-position new-row kcol rest-of-queens)
   (map (lambda (row)
          (map (lambda (square)
@@ -817,15 +824,18 @@
                      (lambda (row)
                        (filter
                         (lambda (s) (and (= (get-col s) col) (is-occupied? s)))
-                        board))
+                        row))
                      board))))
-    (every (lambda (b) (equal? b true))
-           (get-all-in-los queen board))))
+    (every (lambda (b) (equal? b false))
+           (map is-occupied?
+                (get-all-in-los queen board)))))
 
 
 
-(define b1 (adjoin-position 2 2 empty-board))
-(define b2 (adjoin-position 3 3 b1))
+(define b1 (adjoin-position 2 1 empty-board))
+(define b2 (adjoin-position 4 2 b1))
+(define b3 (adjoin-position 1 3 b2))
+(define b4 (adjoin-position 3 4 b3))
 
 
 
