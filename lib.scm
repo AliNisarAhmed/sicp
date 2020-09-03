@@ -47,3 +47,10 @@
 
 
 (define (prime? n) (= n (smallest-divisor n)))
+
+
+(define (for-each proc list) 
+   (cond 
+    ((null? list) #t) 
+    (else (proc (car list)) 
+          (for-each proc (cdr list)))))

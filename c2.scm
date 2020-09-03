@@ -724,7 +724,7 @@
 (define (queens board-size)
   (define (queen-cols k)
     (if (= k 0)
-        (list empty-board)
+        (list (empty-board  board-size))
         (filter
          (lambda (positions) (safe? k positions))
          (flatmap
@@ -734,7 +734,7 @@
                     new-row k rest-of-queens))
                  (enumerate-interval 1 board-size)))
           (queen-cols (- k 1))))))
-  (queen-cols board-size)
+  (queen-cols board-size))
 
 
 
@@ -773,7 +773,7 @@
        (enumerate-interval 1 n)))
 
 
-(define empty-board (generate-board 4))
+(define (empty-board n) (generate-board n))
 
 
 (define (get-all-in-los sqr board)
@@ -832,10 +832,262 @@
 
 
 
-(define b1 (adjoin-position 2 1 empty-board))
+(define b1 (adjoin-position 2 1 (empty-board 4)))
 (define b2 (adjoin-position 4 2 b1))
 (define b3 (adjoin-position 1 3 b2))
 (define b4 (adjoin-position 3 4 b3))
+
+
+;; --------------- Drawing ----------------------
+
+
+
+(define (flipped-pairs-2 painter)
+  (let ((painter2 (beside painter (flip-vert painter))))
+    (below painter2 painter2)))
+
+
+(define wave4 (flipped-pairs wave))
+
+
+(define (right-split painter n)
+  (if (= n 0)
+      painter
+      (let ((smaller (right-split painter (- n 1))))
+        (beside painter (below smaller smaller)))))
+
+
+(define (up-split painter n)
+  (if (= n 0)
+      painter
+      (let ((smaller (up-split painter (- n 1))))
+        (below painter (beside smaller smaller)))))
+
+(define (corner-split painter n)
+  (if (= n 0)
+      painter
+      (let ((up (up-split painter (- n 1)))
+            (right (right-split painter (- n 1))))
+        (let ((top-left (beside up up))
+              (bottom-right (below right right))
+              (corner (corner-split painter (- n 1))))
+          (beside (below painter top-left)
+                  (below bottom-right corner))))))
+
+
+(define (square-limit painter n)
+  (let ((quarter (corner-split painter n)))
+    (let ((half (beside (flip-horiz quarter) quarter)))
+      (below (flip-vert half) half))))
+
+
+(define (square-of-four tl tr bl br)
+  (lambda (painter)
+    (let ((top (beside (tl painter) (tr painter)))
+          (bottom (beside (bl painter) (br painter))))
+      (below bottom top))))
+
+
+(define (flipped-pairs painter)
+  (let ((combine4 (square-of-four identity flip-vert
+                                  identity flip-vert)))
+    (combine4 painter)))
+
+
+(define (square-limit painter n)
+  (let ((combine4 (square-of-four flip-horiz identity
+                                  rotate180 flip-vert)))
+    (combine4 (corner-split painter n))))
+
+
+(define (split first second)
+  (lambda (painter n)
+    (if (= n 0)
+        painter
+        (let ((smaller ((split first second) painter (- n 1))))
+          (first painter (second smaller smaller))))))
+
+
+;; Frames
+
+
+(define (frame-coord-map frame)
+  (lambda (v)
+    (add-vect
+     (origin-frame frame)
+     (add-vect (scale-vect (xcor-vect v) (edge1-frame frame))
+               (scale-vect (ycor-vect v) (edge2-frame frame))))))
+
+
+;; Exercise 2.46
+
+(define (make-vect x y)
+  (list 1 2))
+
+
+(define (xcor-vect v)
+  (car v))
+
+(define (ycor-vect v)
+  (cadr v))
+
+
+(define (add-vect v1 v2)
+  (let ((x1 (xcor-vect v1))
+        (y1 (ycor-vect v1))
+        (x2 (xcor-vect v2))
+        (y2 (xcor-vect v2)))
+    (make-vect (+ x1 x2) (+ y1 y2))))
+
+(define (sub-vect v1 v2)
+  (let ((x1 (xcor-vect v1))
+        (y1 (ycor-vect v1))
+        (x2 (xcor-vect v2))
+        (y2 (xcor-vect v2)))
+    (make-vect (- x1 x2) (- y1 y2))))
+
+
+(define (scale-vect s v1)
+  (let ((x (xcor-vect v1))
+        (y (ycor-vect v1)))
+    (make-vect (* s x) (* s y))))
+
+
+;; Exercise 2.47
+
+(define (make-frame origin edge1 edg2)
+  (list origin edge1 edge2))
+
+(define (origin-frame frame)
+  (car frame))
+
+(define (edge1-frame frame)
+  (cadr frame))
+
+(define (edge2-frame frame)
+  (caddr frame))
+
+
+
+(define (segments->painter segment-list)
+  (lambda (frame)
+    (for-each
+     (lambda (segment)
+       (draw-line
+        ((frame-coord-map frame) (start-segment segment))
+        ((frame-coord-map frame) (end-segment segment))))
+     segment-list)))
+
+
+;; Exercise 2.48
+
+
+(define (make-segment start end)
+  (list start end))
+
+(define (start-segment segment)
+  (car segment))
+
+(define (end-segment segment)
+  (cadr segment))
+
+
+;; Exercise 2.49
+
+(define (outline->painter frame)
+  (let ((origin2 (make-vect
+                  (- (xcor-vect (edge2-frame frame))
+                     (xcor-vect (origin-frame frame)))
+                  (- (ycor-vect (edge1-frame frame))
+                     (ycor-vect (origin-frame frame))))))
+    (segments->painter
+     (list
+      (make-segment (origin-frame frame) (edge1-frame frame))
+      (make-segment (edge1-frame frame) origin2)
+      (make-segment origin2 (edge2-frame frame))
+      (make-segment (edge2-frame frame) (origin-frame frame))))))
+
+(define (X->painter frame) 
+  (let ((origin2 (make-vect  
+                  (- (xcor-vect (edge2-frame frame))  
+                     (xcor-vect (origin-frame frame))) 
+                  (- (ycor-vect (edge1-frame frame))  
+                     (ycor-vect (origin-frame frame)))))) 
+    (segments->painter  
+     (list           
+      (make-segment (origin-frame frame) origin2) 
+      (make-segment (edge1-frame frame) (edge2-frame frame)))))) 
+  
+(define (diamond->painter frame) 
+  (let ((midpoint1 (sub-vect (edge1-frame frame) (origin-frame frame)))  
+        (midpoint2 (sub-vect origin2 (edge1-frame frame)))  
+        (midpoint3 (sub-vect origin2 (edge2-frame frame))) 
+        (midpoint4 (sub-vect (edge2-frame frame) (origin-frame frame)))) 
+    (segments->painter  
+     (list           
+      (make-segment midpoint1 midpoint2) 
+      (make-segment midpoint2 midpoint3) 
+      (make-segment midpoint3 midpoint4) 
+      (make-segment midpoint4 midpoint1))))) 
+
+(define (transform-painter painter origin corner1 corner2)
+  (lambda (frame)
+    (let ((m (frame-coord-map frame)))
+      (let ((new-origin (m origin)))
+        (painter (make-frame
+                  new-origin
+                  (sub-vect (m corner1) new-origin)
+                  (sub-vect (m corner2) new-origin)))))))
+
+
+(define (flip-vert painter)
+  (transform-painter painter
+                     (make-vect 0.0 1.0) ;; new origin
+                     (make-vect 1.0 1.0) ;; new end of edge1
+                     (make-vect 0.0 0.0)))  ;; new end of edge2
+
+
+(define (shrink-to-upper-right painter)
+  (transform-painter
+   painter
+   (make-vect 0.5 0.5)
+   (make-vect 1.0 0.5)
+   (make-vect 0.5 1.0)))
+
+
+(define (rotate90 painter)
+  (transform-painter painter
+                     (make-vect 1.0 1.0)
+                     (make-vect 1.0 1.0)
+                     (make-vect 0.0 0.0)))
+
+
+(define (squash-inwards painter)
+  (transform-painter
+   painter
+   (make-vect 0.0 0.0)
+   (make-vect 0.65 0.35)
+   (make-vect 0.35 0.65)))
+
+
+(define (beside painter1 painter2)
+  (let ((split-point (make-vect 0.5 0.0)))
+    (let ((paint-left (transform-painter painter1
+                                         (make-vect 0.0 0.0)
+                                         (split-point)
+                                         (make-vect 0.0 1.0)))
+          (paint-right (transform-painter painter2
+                                          split-point
+                                          (make-vect 1.0 0.0)
+                                          (make-vect 0.5 1.0))))
+      (lambda (frame)
+        (paint-left frame)
+        (paint-right frame)))))
+
+
+
+
+
 
 
 

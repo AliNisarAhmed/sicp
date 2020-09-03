@@ -356,22 +356,22 @@
 ;; Exercise 1.23
 
 (define (next-odd n) 
-  (if (= n 2)
-      3 
-      (+ n 2)
-      )
-  )
+	(if (= n 2)
+		3 
+		(+ n 2)
+	)
+)
 
 (define (new-smallest-divisor n)
 	(new-find-divisor n 2)
 )
 
 (define (new-find-divisor n test)
-  (cond ((> (square test) n) n)
-        ((divides n test) test)
-        (else (new-find-divisor n (next-odd test)))
-        )
-  )
+	(cond ((> (square test) n) n)
+				((divides n test) test)
+				(else (new-find-divisor n (next-odd test)))
+	)
+)
 
 (define (prime2 n) (= n (new-smallest-divisor n)))
 
@@ -394,14 +394,14 @@
 ;; Ex: 1.27
 
 (define (carmichael n)
-  (define (apply-expmod start end)
-    (cond ((>= start end) true)
-          ((= (expmod start end end) start) (apply-expmod (+ 1 start) end))
-          (else false)
-          )
-    )
-  (apply-expmod 1 n)
-  )
+	(define (apply-expmod start end)
+		(cond ((>= start end) true)
+					((= (expmod start end end) start) (apply-expmod (+ 1 start) end))
+					(else false)
+		)
+	)
+	(apply-expmod 1 n)
+)
 
 ;; Exercise 1.28
 
@@ -415,14 +415,14 @@
 ; )
 
 (define (expmod2 base e m)
-  (cond ((= e 0) 1)
-        ((even? e)
-         (cond ((= base 1) 0)
-               ((= base (- m 1)) 0)
-               ((= ))
-               )
-         )
-        (else (mod (* base (expmod2 base (- e 1) m))))
+	(cond ((= e 0) 1)
+				((even? e)
+					(cond ((= base 1) 0)
+								((= base (- m 1)) 0)
+								((= ))
+					)
+				)
+				(else (mod (* base (expmod2 base (- e 1) m))))
 	)
 )
 
