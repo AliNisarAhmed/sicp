@@ -847,7 +847,7 @@
     (below painter2 painter2)))
 
 
-(define wave4 (flipped-pairs wave))
+;; (define wave4 (flipped-pairs wave))
 
 
 (define (right-split painter n)
@@ -875,7 +875,7 @@
                   (below bottom-right corner))))))
 
 
-(define (square-limit painter n)
+(define (square-limit-2 painter n)
   (let ((quarter (corner-split painter n)))
     (let ((half (beside (flip-horiz quarter) quarter)))
       (below (flip-vert half) half))))
@@ -955,7 +955,7 @@
 
 ;; Exercise 2.47
 
-(define (make-frame origin edge1 edg2)
+(define (make-frame origin edge1 edge2)
   (list origin edge1 edge2))
 
 (define (origin-frame frame)
@@ -968,7 +968,7 @@
   (caddr frame))
 
 
-
+#|
 (define (segments->painter segment-list)
   (lambda (frame)
     (for-each
@@ -977,7 +977,7 @@
         ((frame-coord-map frame) (start-segment segment))
         ((frame-coord-map frame) (end-segment segment))))
      segment-list)))
-
+|#
 
 ;; Exercise 2.48
 
@@ -994,6 +994,7 @@
 
 ;; Exercise 2.49
 
+#|
 (define (outline->painter frame)
   (let ((origin2 (make-vect
                   (- (xcor-vect (edge2-frame frame))
@@ -1006,6 +1007,8 @@
       (make-segment (edge1-frame frame) origin2)
       (make-segment origin2 (edge2-frame frame))
       (make-segment (edge2-frame frame) (origin-frame frame))))))
+
+
 
 (define (X->painter frame) 
   (let ((origin2 (make-vect  
@@ -1029,6 +1032,10 @@
       (make-segment midpoint2 midpoint3) 
       (make-segment midpoint3 midpoint4) 
       (make-segment midpoint4 midpoint1))))) 
+
+|#
+
+
 
 (define (transform-painter painter origin corner1 corner2)
   (lambda (frame)
@@ -1057,7 +1064,7 @@
 
 (define (rotate90 painter)
   (transform-painter painter
-                     (make-vect 1.0 1.0)
+                     (make-vect 1.0 0.0)
                      (make-vect 1.0 1.0)
                      (make-vect 0.0 0.0)))
 
@@ -1083,6 +1090,241 @@
       (lambda (frame)
         (paint-left frame)
         (paint-right frame)))))
+
+
+;; Exercise 2.50
+
+(define (flip-horiz painter)
+  (transform-painter painter
+                     (make-vect 1.0 0.0)
+                     (make-vect 0.0 0.0)
+                     (make-vect 1.0 1.0)))
+
+
+(define (rotate180 painter)
+  (transform-painter painter
+                     (make-vect 1.0 1.0)
+                     (make-vect 0.0 1.0)
+                     (make-vect 1.0 0.0)))
+
+(define (rotate270 painter)
+  (transform-painter painter
+                     (make-vect 0.0 1.0)
+                     (make-vect 0.0 0.0)
+                     (make-vect 1.0 1.0)))
+
+
+
+(define (below painter1 painter2) 
+  (let ((split-point (make-vect 0.0 0.5))) 
+    (let ((paint-bottom 
+           (transform-painter painter1 
+                              (make-vect 0.0 0.0) 
+                              (make-vect 1.0 0.0) 
+                              split-point)) 
+          (paint-top 
+           (transform-painter painter2 
+                              split-point 
+                              (make-vect 1.0 0.5) 
+                              (make-vect 0.0 1.0)))) 
+      (lambda (frame) 
+        (paint-bottom frame) 
+        (paint-top frame))))) 
+
+
+
+
+;; Symbols
+
+(define (memq item x)
+  (cond ((null? x) false)
+        ((eq? item (car x)) x)
+        (else (memq item (cdr x)))))
+
+
+;; Exercise 2.54
+
+(define sl1 '(a b c d))
+(define sl2 '(a b c d))
+
+
+(define (equal-2 item1 item2)
+  (cond ((and (pair? item1) (pair? item2))
+         (if (and (null? item1) (null? item2))
+             true
+             (and (eq? (car item1) (car item2)) (equal-2 (cdr item1) (cdr item2)))))
+        ((or (pair? item1) (pair? item2)) false)
+        (else (eq? item1 item2))))
+
+
+
+;; Symbol manipulation - Calculating derivatives
+
+(define (sum? exp) (and (pair? exp) (eq? (car exp) '+)))
+
+(define (addend s) (car s))
+
+(define (augend s) (accumulate make-sum 0 (cddr s)))
+
+(define (deriv exp var)
+  (cond ((number? exp) 0)
+        ((variable? exp)
+         (if (same-variable? exp var)
+             1
+             0))
+        ((sum? exp)
+         (make-sum
+          (deriv (addend exp) var)
+          (deriv (augend exp) var)))
+        ((product? exp)
+         (make-sum
+          (make-product (multiplier exp)
+                        (deriv (multiplicand exp) var))
+          (make-product (multiplicand exp)
+                        (deriv (multiplier exp) var))))
+        ((exponentiation? exp)
+         (make-product (make-product (exponent exp) (make-exponentiation (base exp) (- (exponent exp) 1)))
+                       (deriv (base exp) var)))
+        (else (error "Unknown expression type: DERIV" exp))
+        ))
+
+
+(define (variable? x) (symbol? x))
+
+
+(define (same-variable? v1 v2)
+  (and (variable? v1) (variable? v2) (eq? v1 v2)))
+
+
+(define (make-sum a1 a2)
+  (cond ((=number? a1 0) a2)
+        ((=number? a2 0) a1)
+        ((and (number? a1) (number? a2)) (+ a1 a2))
+        (else (list '+ a1 a2))
+        ))
+
+(define (=number? exp y) (and (number? exp) (= exp y)))
+
+(define (make-product m1 m2)
+  (cond ((or (=number? m1 0) (=number? m2 0)) 0)
+        ((=number? m1 1) m2)
+        ((=number? m2 1) m1)
+        ((and (number? m1) (number? m2)) (* m1 m2))
+        (else (list '* m1 m2))))
+
+
+
+
+
+
+(define (product? exp) (and (pair? exp) (eq? (car exp) '*)))
+
+(define (multiplier p) (cadr p))
+
+(define (multiplicand p) (accumulate make-product 1 (cddr p)))
+
+
+;; Exercise 2.56
+
+
+(define (exponentiation? exp)
+  (and (pair? exp) (eq? (car exp) '**)))
+
+
+(define (exponent exp) (caddr exp))
+(define (base exp) (cadr exp))
+
+(define (make-exponentiation b e)
+  (cond ((=number? e 0) 1)
+        ((=number? e 1) b)
+        (else (list '** b e))
+        ))
+
+(define x-square (make-exponentiation 'x 2))
+(define x-cube (make-exponentiation 'x 3))
+
+(define s1 (make-sum 'x (make-sum 'y 'z)))
+
+;; Exercise 2.58
+
+
+
+;; ------- INFIX Sum ---------------
+
+(define (sum-i? exp) (and (pair? exp) (eq? (cadr exp) '+)))
+
+(define (make-sum-i n1 n2)
+  (cond ((=number? n1 0) n2)
+        ((=number? n2 0) n1)
+        ((and (number? n1) (number? n2)) (+ n1 n2))
+        (else (list n1 '+ n2))))
+
+(define xyz-sum (make-sum-i 'x (make-sum-i 'y 'z)))
+
+(define (addend-i exp) (car exp))
+(define (augend-i exp) (caddr exp))
+
+;; ------- INFIX product -----------
+
+
+(define (prod-i? exp) (and (pair? exp) (eq? (cadr exp) '*)))
+
+(define (make-prod-i n1 n2)
+  (cond ((or (=number? n1 0) (=number? n2 0)) 0)
+        ((=number? n1 1) n2)
+        ((=number? n2 1) n1)
+        ((and (number? n1) (number? n2)) (* n1 n2))
+        (else (list n1 '* n2))))
+
+(define abc-prod (make-prod-i 'a (make-prod-i 'b 'c)))
+
+(define (multiplier-i exp) (car exp))
+(define (multiplicand-i exp) (caddr exp))
+
+;; ---- INFIX Derivative ----
+
+(define (deriv-i exp var)
+  (cond ((number? exp) 0)
+        ((variable? exp)
+         (if (same-variable? exp var)
+             1
+             0))
+        ((sum-i? exp)
+         (make-sum-i
+          (deriv-i (addend-i exp) var)
+          (deriv-i (augend-i exp) var)))
+        ((prod-i? exp)
+         (make-sum-i
+          (make-prod-i (multiplier-i exp)
+                       (deriv-i (multiplicand-i exp) var))
+          (make-prod-i (multiplicand-i exp)
+                       (deriv-i (multiplier-i exp) var))))
+        (else (error "Infix expression required"))))
+
+
+(define (memq item x)
+  (cond ((null? x) false)
+        ((eq? item (car x)) x)
+        (else (memq item (cdr x)))))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
