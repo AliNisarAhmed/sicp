@@ -1,6 +1,6 @@
 #lang sicp
 
-(#%require "lib.scm")
+(#%require "../lib.scm")
 
 ;; Exercise 2.4
 
@@ -1601,7 +1601,7 @@
         (let ((next-branch (choose-branch (car bits) current-branch)))
           (if (leaf? next-branch)
               (cons (symbol-leaf next-branch)
-                    (decode-1 (cdr bits) next-branch))
+                    (decode-1 (cdr bits) tree))
               (decode-1 (cdr bits) next-branch)))))
   (decode-1 bits tree))
 
@@ -1622,7 +1622,7 @@
   (if (null? pairs)
       '()
       (let ((pair (car pairs)))
-        (adjoin-set (make-leaf (car pair)   ;; symbol
+        (adjoin-set-c (make-leaf (car pair)   ;; symbol
                                (cadr pair)) ;; frequency
                     (make-leaf-set (cdr pairs))))))
 
@@ -1638,6 +1638,106 @@
 
 
 (define sample-message '(0 1 1 0 0 1 0 1 0 1 1 1 0))
+
+
+
+;; Exercise 2.68
+
+(define (some f list)
+  (if (null? list)
+      false
+      (if (f (car list))
+          true
+          (some f (cdr list)))))
+
+
+
+(define (encode message tree)
+  (if (null? message)
+      '()
+      (append (encode-symbol (car message) tree)
+              (encode (cdr message) tree))))
+
+
+
+(define (encode-symbol symbol tree)
+  (if (leaf? tree)
+      (if (eq? (symbol-leaf tree) symbol)
+          '()
+          (error "Symbol not in Tree"))
+      (let ((left (left-branch-c tree))
+            (right (right-branch-c tree)))
+        (cond ((some (lambda (x) (eq? x symbol)) (symbols left))
+               (cons '0 (encode-symbol symbol left)))
+              ((some (lambda (x) (eq? x symbol)) (symbols right))
+               (cons '1 (encode-symbol symbol right)))
+              (else "Symbol not in tree")))))
+
+
+;; Exercise 2.69
+
+(define (generate-huffman-tree pairs)
+  (successive-merge (make-leaf-set pairs)))
+
+(define (successive-merge leaves)
+  (let ((first (car leaves))
+        (rest (cdr leaves)))
+    (if (null? rest)
+        first
+        (successive-merge (adjoin-set-c (make-code-tree first (car rest)) (cdr rest))))))
+
+(define (re-order-leaves leaves)
+  (if (null? leaves)
+      leaves
+      (let ((first (car leaves))
+            (rest (cdr leaves)))
+        (if (null? rest)
+            leaves
+            (if (< (weight first) (weight (car rest)))
+                leaves
+                (cons (car rest) (re-order-leaves (cons first (cdr rest)))))))))
+
+(define example-pairs
+  (list (list 'A 4)
+        (list 'B 2)
+        (list 'C 1)
+        (list 'D 1)))
+
+
+(define example-tree
+  (generate-huffman-tree example-pairs))
+
+
+
+;; Exercise 2.70
+
+(define song-pairs
+  (list (list 'A 2)
+        (list 'GET 2)
+        (list 'SHA 3)
+        (list 'WAH 1)
+        (list 'BOOM 1)
+        (list 'JOB 2)
+        (list 'NA 16)
+        (list 'YIP 9)))
+
+(define song-tree (generate-huffman-tree song-pairs))
+
+
+(define getAJob (encode '(GET A JOB) song-tree))
+
+(define shaNa (encode (append '(SHA) (repeat 'NA 8)) song-tree))
+
+(define wahYip (encode (append '(WAH) (repeat 'YIP 9)) song-tree))
+
+(define shaBoom (encode '(SHA BOOM) song-tree))
+
+(define song (list getAJob shaNa getAJob shaNa wahYip shaBoom))
+
+
+
+
+
 
 
 
