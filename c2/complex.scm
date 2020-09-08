@@ -3,6 +3,8 @@
 (#%require "../lib.scm")
 
 
+(#%provide (all-defined))
+
 ;; ---- COMPLEX NUMBERS ----
 
 
@@ -26,21 +28,26 @@
 
 ;; using type tags for separating rectangular form (x & y) with polar form (magnitude and angle)
 
-(define (attach-tag type-tag contents)
-  (cons type-tag contents))
+(define (attach-tag tag contents)
+  (cond ((number? contents) contents)
+        ((symbol? contents) contents)
+        ((pair? contents) (cons tag contents))
+        ))
 
 (define (type-tag datum)
-  (if (pair? datum)
-      (car datum)
-      (error "Bad tagged datum: TYPE-TAG: " datum)))
+  (cond ((number? datum) 'scheme-number)
+        ((symbol? datum) 'symbol)
+        ((pair? datum) (car datum))
+        (else (error "Bad tagged datum: TYPE-TAG " datum))
+        ))
 
 
 (define (contents datum)
-  (if (pair? datum)
-      (cdr datum)
-      (error "Bad tagged dataL CONTENTS: " datum)))
-
-
+  (cond ((number? datum) datum)
+        ((symbol? datum) datum)
+        ((pair? datum) (cdr datum))
+        (else (error "Bad datum"))
+        ))
 
 (define (rectangular? z)
   (eq? (type-tag z) 'rectangular))
@@ -134,17 +141,93 @@
 
 
 
+;; Data Directed programming
+
+;; In contrast to the above methods which deal explicitly with types themselves
+  ;; in Data Directed prog. we work with a "table" of external functions vs types,
+    ;; which gives us the function to apply depending on type
+
+;; The key idea of data-directed programming is to handle generic operations in programs
+  ;; by dealing explicitly with operation-and-type tables,
+
+
+;; put :: Operation Name -> type -> Operation -> void (put the operation into the table)
+;; get :: Operation Name -> type -> Operation  (get the operation out of the table)
+
+(define (install-rectangular-package)
+  ;; internal procedures
+  (define (real-part z) (car z))
+  (define (imag-part z) (cdr z))
+  (define (make-from-real-imag x y) (cons x y))
+  (define (magnitude z)
+    (sqrt (+ (square (real-part z))
+             (square (imag-part z)))))
+  (define (angle z)
+    (atan (imag-part z) (real-part z)))
+  (define (make-from-mag-ang r a)
+    (cons (* r (cos a)) (* r (sin a)) ))
+
+  ;; External interface
+
+  (define (tag x) (attach-tag 'rectangular x))
+  (put 'real-part '(rectangular) real-part)
+  (put 'imag-part '(rectangular) imag-part)
+  (put 'magnitude '(rectangular) magnitude)
+  (put 'angle '(rectangular) angle)
+  (put 'make-from-real-imag 'rectangular (lambda (x y) (tag (make-from-real-imag x y))))
+  'done)
+
+
+(define (install-polar-package)
+;; internal procedures
+  (define (magnitude z) (car z))
+  (define (angle z) (cdr z))
+  (define (make-from-mag-ang r a) (cons r a))
+  (define (real-part z) (* (magnitude z) (cos (angle z))))
+  (define (imag-part z) (* (magnitude z) (sin (angle z))))
+  (define (make-from-real-imag x y)
+    (cons (sqrt (+ (square x) (square y)))
+          (atan y x)))
+  ;; interface to the rest of the system
+  (define (tag x) (attach-tag 'polar x))
+  (put 'real-part '(polar) real-part)
+  (put 'imag-part '(polar) imag-part)
+  (put 'magnitude '(polar) magnitude)
+  (put 'angle '(polar) angle)
+  (put 'make-from-real-imag 'polar
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang 'polar
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  'done)
+
+
+;; Message passing style
+
+;; Exercise 2.75
+
+(define (make-from-mag-ang-m r a)
+  (define (dispatch op)
+    (cond ((eq? op 'real-part) (* r (cos a)))
+          ((eq? op 'imag-part) (* r (sin a)))
+          ((eq? op 'magnitude) r)
+          ((eq? op 'angle) a)
+          (else (error "Unknown op"))
+          ))
+  dispatch)
 
 
 
 
 
 
+;;
 
-
-
-
-
+(define (apply-generic op . args)
+  (let ((type-tags) (map type-tag args))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          (error "No method for these types")))))
 
 
 
