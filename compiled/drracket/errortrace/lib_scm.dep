@@ -1,1 +1,1 @@
-("7.8" racket ("18572e40eab2cadf01621b536e9db2df24b188b3" . "2f3dfd79e6017aeaaf7871fa9817ce8c450f6f3f") (collects #"errortrace" #"errortrace-key.rkt") (collects #"sicp" #"lang" #"reader.rkt") (collects #"sicp" #"main.rkt"))
+("7.8" racket ("d15c162a7dcbc2286ad8b1861dd505315318e3aa" . "2f3dfd79e6017aeaaf7871fa9817ce8c450f6f3f") (collects #"errortrace" #"errortrace-key.rkt") (collects #"sicp" #"lang" #"reader.rkt") (collects #"sicp" #"main.rkt"))

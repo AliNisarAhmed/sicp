@@ -223,7 +223,7 @@
 ;;
 
 (define (apply-generic op . args)
-  (let ((type-tags) (map type-tag args))
+  (let ((type-tags (map type-tag args)))
     (let ((proc (get op type-tags)))
       (if proc
           (apply proc (map contents args))
@@ -232,5 +232,6 @@
 
 
 
-
+(define (put x y) 'undefined)
+(define (get x y) 'undefined)
 

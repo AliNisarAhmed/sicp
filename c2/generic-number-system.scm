@@ -35,6 +35,8 @@
 
   (put '=zero? 'scheme-number (lambda (x) (= x 0)))
 
+  (put 'raise 'scheme-number (lambda (x) (make-rational x 1)))
+
   'done
   )
 
@@ -81,7 +83,7 @@
 
   (put 'sub '(rational rational) (lambda (x y) (tag (sub-rat x y))))
 
-  (put 'mul '(rational rational) (lambda (X y) (tag (mul-rat x y))))
+  (put 'mul '(rational rational) (lambda (x y) (tag (mul-rat x y))))
 
   (put 'div '(rational rational) (lambda (x y) (tag (div-rat x y))))
 
@@ -91,6 +93,8 @@
                                                          (= (denom x) (denom y))))))
 
   (put '=zero? 'rational (lambda (x) (= (numer x) 0)))
+
+  (put 'raise 'rational (lambda (x) (/ (numer x) (denom x))))
 
   'done
   )
@@ -119,7 +123,7 @@
                          (+ (imag-part c1) (imag-part c2))))
 
   (define (sub-complex c1 c2)
-    (make-from-real-mag (- (real-part c1) (real-part c2))
+    (make-from-real-imag (- (real-part c1) (real-part c2))
                         (- (imag-part c1) (imag-part c2))))
 
   (define (mul-complex z1 z2)
@@ -160,6 +164,8 @@
 
   (put '=zero? 'complex (lambda (x) (= (real-part x) (imag-part x) 0)))
 
+  (put 'raise 'complex (lambda (x) (make-from-real-imag x 0)))
+
   'done
   )
 
@@ -180,6 +186,98 @@
 ;; Exercise 2.80
 
 (define (=zero? x) (apply-generic '=zero? x))
+
+
+
+;; ---- Coercion ----
+
+
+(define (scheme-number->complex n)
+  (make-complex-from-real-imag (contents n) 0))
+
+
+;; for geting and putting into coercion table
+(define (get-coercion x y z) 'undefined)
+(define (put-coercion x y z) 'undefined)
+
+(put-coercion 'scheme-number
+              'complex
+              scheme-number->complex)
+
+
+
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          (if (= (length args) 2)
+              (let ((type1 (car type-tags))
+                    (type2 (cadr type-tags))
+                    (a1 (car args))
+                    (a2 (cadr args)))
+                (if (not (eq? type1 type2))                    
+                    (let ((t1->t2 (get-coercion type1 type2))
+                          (t2->t1 (get-coercion type2 type1)))
+                      (cond (t1->t2 (apply-generic op (t1->t2 a1) a2))
+                            (t2->t1 (apply-generic op a1 (t2->t1 a2)))
+                            (else (error "No method for these types " (list op type-tags)))
+                            ))
+                    (error "No method for these types")))
+              (error "No method for these types " (list op type-tags)))))))
+
+
+
+
+;; Exercise 2.82
+
+(define (coerce type-tags args)
+  (define (iter tags)
+    (if (null? tags)
+        false
+        (let ((type-to (car tags)))
+          (let ((coercions (map (lambda (type-from)
+                                  (if (eq? type-from type-to)
+                                      (lambda (x) x)
+                                      (get-coercion type-from type-to)))
+                                type-tags)))
+            (if (any (lambda (x) (equal? x false)))
+                (iter (cdr tags))
+                (map (lambda (coercion arg) (coercion arg))
+                     coercions
+                     args))))))
+  (iter type-tags))
+
+
+(define (apply-generic-2 op args)
+  (define (no-method-error)
+    (error "No method for these types"))
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags))
+          (first-type (car type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          (let ((types (map (lambda (t) (get-coercion first-type t)) type-tags)))
+            (apply-generic op (map (lambda (a t) (t a)) args type-tags)))))))
+
+
+;; Exercise 2.83
+
+
+;; generic raise
+
+(define (raise x) (apply-generic 'raise x))
+
+
+
+
+
+
+
+
+
+
+
 
 
 

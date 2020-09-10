@@ -54,3 +54,9 @@
     ((null? list) #t) 
     (else (proc (car list)) 
           (for-each proc (cdr list)))))
+
+
+(define (any f items)
+  (cond ((null? items) false)
+        ((f (car items)) true)
+        (else (any f (cdr items)))))
