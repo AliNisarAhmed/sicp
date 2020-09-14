@@ -60,3 +60,28 @@
   (cond ((null? items) false)
         ((f (car items)) true)
         (else (any f (cdr items)))))
+
+(define (all f items)
+  (cond ((null? items) true)
+        ((not (f (car items))) false)
+        (else (all f (cdr items)))
+        ))
+
+
+(define (variable? x) (symbol? x))
+
+
+(define (same-variable? v1 v2)
+  (and (variable? v1) (variable? v2) (eq? v1 v2)))
+
+
+(define (prepend item times list)
+  (append (repeat item times)
+          list))
+
+(define (repeat item times)
+  (define (iter result count)
+    (if (= count 0)
+        result
+        (iter (cons item result) (- count 1))))
+  (iter '() times))

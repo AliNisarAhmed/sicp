@@ -2,9 +2,122 @@
 
 (#%require "../lib.scm")
 
-(#%require "complex.scm")
+
+(#%provide (all-defined))
+
+;; (#%require "complex.scm")
+
+
+(define (put x y) 'undefined)
+(define (get x y) 'undefined)
 
 ;;
+
+;; Functions for Dealing with type tags
+
+(define (attach-tag tag contents)
+  (cond ((number? contents) contents)
+        ((symbol? contents) contents)
+        ((pair? contents) (cons tag contents))
+        ))
+
+(define (type-tag datum)
+  (cond ((number? datum) 'scheme-number)
+        ((symbol? datum) 'symbol)
+        ((pair? datum) (car datum))
+        (else (error "Bad tagged datum: TYPE-TAG " datum))
+        ))
+
+
+(define (contents datum)
+  (cond ((number? datum) datum)
+        ((symbol? datum) datum)
+        ((pair? datum) (cdr datum))
+        (else (error "Bad datum"))
+        ))
+
+
+
+(define (apply-generic-old op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if (proc)
+          (apply proc (map contents args))
+          (error "No Method for these types")))))
+
+
+
+;;
+
+
+(define (rectangular? z)
+  (eq? (type-tag z) 'rectangular))
+
+(define (polar z)
+  (eq? (type-tag z) 'polar))
+
+
+
+;; Rectangular Package
+
+(define (install-rectangular-package)
+  ;;
+  (define (real-part z) (car z))
+  (define (imag-part z) (cdr z))
+  (define (make-from-real-imag x y) (cons x y))
+  (define (magnitude z)
+    (sqrt (+ (square (real-part z))
+             (square (imag-part z))
+             )))
+  (define (angle z)
+    (atan (imag-part z) (real-part z)))
+  (define (make-from-mag-ang r a)
+    (cons (* r (cos a)) (* r (sin a))))
+
+  ;; external interface
+
+  (define (tag x) (attach-tag 'rectangular x))
+  (put 'real-part '(rectangular) real-part)
+  (put 'imag-part '(rectangular) imag-part)
+  (put 'magnitude '(rectangular) magnitude)
+  (put 'angle '(rectangular) angle)
+  (put 'make-from-real-imag 'rectangular
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang 'rectangular
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  'DONE
+  )
+
+
+;; Polar Package
+
+(define (install-polar-package)
+  ;; internal procedures
+
+  (define (magnitude z) (car z))
+  (define (angle z) (cdr z))
+  (define (make-from-mag-ang r a) (cons r a))
+  (define (real-part z) (* (magnitude z) (cos (angle z))))
+  (define (imag-part z) (* (magnitude z) (sin (angle z))))
+  (define (make-from-real-imag x y)
+    (cons (sqrt (+ (square x) (square y)))
+          (atan y x)))
+
+  ;; external interface / public api
+
+  (define (tag x) (attach-tag 'polar x))
+  (put 'real-part '(polar) real-part)
+  (put 'imag-part '(polar) imag-part)
+  (put 'magnitude '(polar) magnitude)
+  (put 'angle '(polar) angle)
+  (put 'make-from-real-imag 'polar
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang 'polar
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  'DONE
+  )
+
+
 
 (define (add x y) (apply-generic 'add x y))
 
@@ -17,7 +130,7 @@
 ;; Ordinary numbers
 
 
-(define (install-scheme-number)
+(define (install-scheme-number-package)
 
   (define (tag x) (attach-tag 'scheme-number x))
 
@@ -36,6 +149,10 @@
   (put '=zero? 'scheme-number (lambda (x) (= x 0)))
 
   (put 'raise 'scheme-number (lambda (x) (make-rational x 1)))
+
+  (put 'project 'scheme-number id)
+
+  (put 'negate 'scheme-number (lambda (x) (* -1 x)))
 
   'done
   )
@@ -96,13 +213,19 @@
 
   (put 'raise 'rational (lambda (x) (/ (numer x) (denom x))))
 
-  'done
+  (put 'project 'rational (lambda (x) (numer x)))
+
+  (put 'negate 'rational (lambda (x) (make-rat (* -1 (numer x))
+                                               (denom x))))
+
+  'DONE
   )
 
 
 ;; this is how users will make rational numbers
 (define (make-rational n d)
   ((get 'make 'rational) n d))
+
 
 
 
@@ -113,8 +236,8 @@
   (define (make-from-real-imag x y)
     ((get 'make-from-real-imag 'rectangular) x y))
 
-  (define (make-from-mag-angle r a)
-    ((get 'make-from-mag-angle 'polar) r a))
+  (define (make-from-mag-ang r a)
+    ((get 'make-from-mag-ang 'polar) r a))
 
   ;; internal procedures
 
@@ -166,7 +289,12 @@
 
   (put 'raise 'complex (lambda (x) (make-from-real-imag x 0)))
 
-  'done
+  (put 'project 'complex (lambda (x) (real-part x)))
+
+  (put 'negate 'complex (lambda (x) (make-from-real-img (- (real-part x))
+                                                        (- (imag-part x)))))
+
+  'DONE
   )
 
 
@@ -178,16 +306,37 @@
   ((get 'make-from-mag-ang 'complex) r a))
 
 
+;; Exercise 2.77
+
+;; magnitude must have been defined like this
+
+#|
+
+(define (magnitude z)
+  (apply-generic 'magnitude z))
+
+
+|#
+
+
 
 ;; Exercise 2.79
 
-(define (eq? n1 n2) (apply-generic 'equ n1 n2))
+(define (equ? n1 n2) (apply-generic 'equ n1 n2))
 
 ;; Exercise 2.80
 
 (define (=zero? x) (apply-generic '=zero? x))
 
 
+
+(define (install-arthmetic-package)
+  (define (equ? n1 n2)
+    (apply-generic 'equ n1 n2))
+  (define (=zero? x) (apply-generic '=zero? x))
+  (define (raise x) (apply-generic 'raise x))
+  'DONE
+  )
 
 ;; ---- Coercion ----
 
@@ -231,6 +380,8 @@
 
 ;; Exercise 2.82
 
+;; In coerce, we assume that get-coercion returns false if no coercion exists
+
 (define (coerce type-tags args)
   (define (iter tags)
     (if (null? tags)
@@ -241,7 +392,7 @@
                                       (lambda (x) x)
                                       (get-coercion type-from type-to)))
                                 type-tags)))
-            (if (any (lambda (x) (equal? x false)))
+            (if (any (lambda (x) (equal? x false)) coercions)
                 (iter (cdr tags))
                 (map (lambda (coercion arg) (coercion arg))
                      coercions
@@ -249,16 +400,18 @@
   (iter type-tags))
 
 
-(define (apply-generic-2 op args)
+(define (apply-generic-2 op . args)
   (define (no-method-error)
     (error "No method for these types"))
   (let ((type-tags (map type-tag args)))
-    (let ((proc (get op type-tags))
-          (first-type (car type-tags)))
+    (let ((proc (get op type-tags)))
       (if proc
           (apply proc (map contents args))
-          (let ((types (map (lambda (t) (get-coercion first-type t)) type-tags)))
-            (apply-generic op (map (lambda (a t) (t a)) args type-tags)))))))
+          (let ((coerced-args (coerce type-tags args)))
+            (if coerced-args
+                (let ((new-proc (get op (map type-tag coerced-args))))
+                  (apply new-proc (map contents coerced-args)))
+                (error "No common type found to coerce to")))))))
 
 
 ;; Exercise 2.83
@@ -267,6 +420,90 @@
 ;; generic raise
 
 (define (raise x) (apply-generic 'raise x))
+
+
+
+
+;; Exercise 2.84
+
+;; complex > real > rational > 'scheme-number
+
+(define (level type)
+  (cond ((eq? type 'rational) 0)
+        ((eq? type 'scheme-number) 1)
+        ((eq? type 'complex) 2)
+        (else (error "Invalid Type"))))
+
+(define (apply-generic-3 op . args)
+  (define (no-method) (error "No method for these types"))
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          (if (not (null? (cdr args))) ;; length of args > 1
+              (let ((raised-args (raise-to-common args)))
+                (if raised-args
+                    (let ((proc (get op (map type-tag raised-args))))
+                      (if proc
+                          (apply proc (map contents raised-args))
+                          (no-method)))
+                    (no-method)))
+              (no-method))))))
+
+
+(define (raise-to-common args)
+  (let ((raised-args (map (lambda (x) (raise-to-type (highest-type args) x))
+                          args)))
+    (if (all id raised-args)
+        raised-args
+        false)))
+
+(define (raise-to-type type item)
+  (let ((item-type (type-tag item)))
+    (if (eq? item-type type)
+        item
+        (let ((raise-fn (get 'raise item-type)))
+          (if raise-fn
+              (raise-to-type type (raise-fn item))
+              false)))))
+
+
+(define (highest-type args)
+  (if (null? (cdr args))
+      (type-tag (car args))
+      (let ((t1 (type-tag (car args)))
+            (t2 (type-tag (highest-type (cdr args)))))
+        (let ((l1 (level t1))
+              (l2 (level t2)))
+          (if (> l1 l2) t1 t2)))))
+
+
+(define (all-true? lst) 
+   (cond ((null? lst) true) 
+         ((car lst) (all-true? (cdr lst))) 
+         (else false)))
+
+
+
+;; Exercise 2.85
+
+
+(define (project item)
+  (apply-generic 'project item))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
