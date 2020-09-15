@@ -20,7 +20,7 @@
   ;; INTERNAL PROCEDURES
 
   (define (add-poly p1 p2)
-  (if (same-variable? (variable p1) (variable p2))
+    (if (same-variable? (variable p1) (variable p2))
       (make-poly (variable p1)
                  (add-terms (term-list p1) (term-list p2)))
       (error "Polynomials not in same variable")))
@@ -87,7 +87,7 @@
   (define (negate-term t) (make-term (order t)
                                      (negate (coeff t))))
 
-  
+
 
   ;; EXTERNAL INTERFACE
 
@@ -105,10 +105,60 @@
 
 ;; Exercise 2.90
 
-(define (first-term term-list) 
-  (make-term (- (len term-list) 1) (car term-list))) 
+(define (first-term term-list)
+  (make-term (- (len term-list) 1) (car term-list)))
+
+(define (adjoin-term term term-list)
+  (cond ((=zero? term) term-list)
+        ((=equ? (order term) (length term-list)) (cons (coeff term) term-list))
+        (else (adjoin-term term (cons 0 term-list)))))
+
+
+;; Exercise 2.91
+
+(define (div-terms L1 L2)
+  (if (empty-termlist? L1))
+      (list (the-empty-termlist) (the-empty-termlist))
+      (let ((t1 (first-term L1))
+            (t2 (first-term L2)))
+        (if (> (order t1) (order t2))
+            (list (the-empty-termlist) L1)
+            (let ((new-c (div (coeff t1) (coeff t2)))
+                  (new-o (- (order t1) (order t2))))
+              (let ((rest-of-result (div-terms (sub-terms L1
+                                                          (mul-term-by-all-terms
+                                                           (make-term new-o new-c)
+                                                           L2))
+                                               L2))
+                (list (adjoin-term (make-term new-o new-c) (car rest-of-result))
+                      (cadr result-of-result))))))))
+
+(define (div-poly p1 p2)
+  (if (same-variable? (variable p1) (variable p2))
+      (let ((term-div-result (div-terms (term-list p1) (term-list p2))))
+        (let ((quotient-term-list (car term-div-result))
+              (remainder-term-list (cadr term-div-result)))
+          (list (make-poly (variable p1) quotient-term-list)
+                (make-poly (variable p1) remainder-term-list))))
+      (error "Poly not in same variable")))
+
+
+
   
-(define (adjoin-term term term-list) 
-  (cond ((=zero? term) term-list) 
-        ((=equ? (order term) (length term-list)) (cons (coeff term) term-list)) 
-        (else (adjoin-term term (cons 0 term-list))))) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
