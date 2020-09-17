@@ -119,6 +119,13 @@
 
 ;; Section 3.1.2
 
+;; ---- sample functions
+
+(define random-init 0)
+(define (random-update x) (+ x 1))
+
+;; ----
+
 (define rand (let ((x random-init))
                (lambda ()
                  (set! x (random-update x))
@@ -126,21 +133,56 @@
 
 
 
+(define (estimate-pi num-trials)
+  (sqrt (/ 6 (monte-carlo num-trials cesaro-test))))
+
+(define (cesaro-test)
+  (= (gcd (rand) (rand) 1)))
+
+(define (monte-carlo num-trials experiment)
+  (define (iter trials-remaining trials-passed)
+    (cond ((= trials-remaining 0) (/ trials-passed num-trials))
+          ((experiment) (iter (- trials-remaining 1) (+ 1 trials-passed)))
+          (else (iter (- trials-remaining 1) trials-passed))))
+  (iter num-trials 0))
 
 
+;; Exercise 3.5
 
 
+(define (estimate-integral p x1 x2 y1 y2 num-trials)
+  (define experiment
+    (let ((x (random-in-range x1 x2))
+          (y (random-in-range y1 y2)))
+      (check-if-in-unit-circle x y)))
+  (monte-carlo num-trials experiment)
+  )
+
+(define (estimate-pi-2 num-trials)
+  (let ((radius 1))
+    (/ (estimate-integral check-if-in-unit-circle 0 2 0 2 num-trials) (* radius radius))))
+
+(define (check-if-in-unit-circle x y)
+  (let ((center-x 1)
+        (center-y 1))
+    (<= (+ (square (- x center-x))
+           (square (- y center-y)))
+        1)))
 
 
+;; Exercise 3.6
 
-
-
-
-
-
-
-
-
+(define rand-2
+  (let ((x random-init))
+    (define (dispatch command)
+      (cond ((eq? command 'generate)
+         (begin (set! x (random-update x))
+                 x))
+        ((eq? command 'reset)
+         (lambda (new-value) (set! x new-value)))
+        (else (error "Unknown command"))
+        ))
+    dispatch))
 
 
 

@@ -85,3 +85,7 @@
         result
         (iter (cons item result) (- count 1))))
   (iter '() times))
+
+(define (random-in-range low high)
+  (let ((range (- high low)))
+    (+ low (random high))))
