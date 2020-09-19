@@ -69,6 +69,9 @@
 
 ;; Exercise 3.3
 
+#|
+
+
 (define (make-account-pwd balance password)
   (define (withdraw amount)
     (if (>= balance amount)
@@ -88,6 +91,8 @@
   dispatch
   )
 
+
+|#
 
 ;; Exercise 3.4
 
@@ -183,6 +188,76 @@
         (else (error "Unknown command"))
         ))
     dispatch))
+
+
+
+(define (make-simplified-withdraw balance)
+  (lambda (amount)
+    (set! balance (- balance amount))
+    balance))
+
+(define (make-decrementer balance)
+  (lambda (amount)
+    (- balance amount)))
+
+
+
+;; Exercise 3.7
+
+
+(define (make-account-pwd balance password)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        (error "Insufficient balance")))
+  (define (deposit amount)
+    (begin (set! balance (+ amount balance))
+           balance))
+  (define (check-pwd pwd)
+    (eq? pwd password))
+  (define (dispatch pwd method)
+    (if (eq? pwd password)
+        (cond ((eq? method 'withdraw) withdraw)
+              ((eq? method 'deposit) deposit)
+              ((eq? method 'check-password) check-pwd)
+              (else (error "No such method"))
+              )
+        (error "Password does not match")))
+  dispatch
+  )
+
+
+
+(define (make-joint account orig-pwd new-pwd)
+  (define (dispatch pwd method)
+    (if (account orig-pwd 'check-password)
+        account
+        (error "Wrong password for the account")))
+  dispatch)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
