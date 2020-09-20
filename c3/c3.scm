@@ -230,11 +230,49 @@
 
 
 (define (make-joint account orig-pwd new-pwd)
+  (define acc account)
   (define (dispatch pwd method)
     (if (account orig-pwd 'check-password)
-        account
+        (if (eq? pwd new-pwd)
+            (acc orig-pwd method)
+            (error "Wrong password for the account"))
         (error "Wrong password for the account")))
   dispatch)
+
+
+(define peter-acc (make-account-pwd 100 'abc))
+(define paul-acc (make-joint peter-acc 'abc 'xyz))
+(define sam-acc (make-joint peter-acc 'abc 'sam))
+
+
+;; Exercise 3.8
+
+;; (+ (f 0) (f 1)) == 0 LSH == 1 RHS
+
+(define f
+  (let ((store 'init))
+    (lambda (x)
+      (if (eq? store 'init)
+          (begin (set! store x)
+                 x)
+          store))))
+
+
+;; solved 3.9 & 3.10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
