@@ -261,23 +261,48 @@
 ;; solved 3.9 & 3.10
 
 
+;; Exercise 3.13
+
+(define (make-cycle x)
+  (set-cdr! (last-pair x) x)
+  x)
+
+;; (define x (list 'a 'b 'c))
+;; (define y (list 'x 'y 'z))
 
 
+;;
+
+(define (append! x y)
+  (set-cdr! (last-pair x) y)
+  x)
+
+(define (last-pair x)
+  (if (null? (cdr x))
+      x
+      (last-pair (cdr x))))
+
+(define (set-to-wow! x)
+  (set-car! (car x) 'wow)
+  x)
 
 
+;; Exercise 3.16
 
+(define (count-pairs x)
+  (if (not (pair? x))
+      0
+      (+ (count-pairs (car x))
+         (count-pairs (cdr x))
+         1)))
 
+(define x '(a))
+(define y '(b))
+(define z '(c))
 
-
-
-
-
-
-
-
-
-
-
+(define z1 '(a b c)) ;; 3
+(define z4 '((a) b c)) ;; 4
+(define z7 (cons z1 z1)) ;; 7
 
 
 

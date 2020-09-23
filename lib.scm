@@ -89,3 +89,9 @@
 (define (random-in-range low high)
   (let ((range (- high low)))
     (+ low (random high))))
+
+
+(define (last-pair list)
+  (if (null? (cdr list))
+      list
+      (last-pair (cdr list))))
