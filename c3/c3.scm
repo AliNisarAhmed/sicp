@@ -289,7 +289,7 @@
 
 ;; Exercise 3.16
 
-(define (count-pairs x)
+(define (count-pairs-wrong x)
   (if (not (pair? x))
       0
       (+ (count-pairs (car x))
@@ -302,13 +302,38 @@
 
 (define z1 '(a b c)) ;; 3
 (define z4 '((a) b c)) ;; 4
-(define z7 (cons z1 z1)) ;; 7
+(define z7 '((a b) (c d) e)) ;; 7
+(define zn (make-cycle '(a b)))
+
+;; Exercise 3.17
+
+;; do it again 
+
+(define (count-pairs x)
+  (let ((y '())
+        (fst (car x))
+        (snd (cdr x)))
+    (cond ((and (not (pair? fst)) (null? snd)) 1)
+          ((not (pair? fst)) (+ 1 (count-pairs snd)))
+          ((any (lambda (ys) (eq? ys fst)) y)
+           (if (null? snd)
+               0
+               (count-pairs snd)))
+          (else (begin (append! fst y)
+                       (+ (count-pairs snd)
+                          1))))))
 
 
+;; Exercise 3.18
 
-
-
-
+(define (cycles? list)
+  (define (helper x)
+    (let ((fst (car x))
+        (snd (cdr x)))
+    (cond ((null? snd) false)
+          ((eq? snd list) true)
+          (else (helper snd)))))
+  (helper list))
 
 
 
