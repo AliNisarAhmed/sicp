@@ -326,6 +326,8 @@
 
 ;; Exercise 3.18
 
+;; This only caters to a list which does not have non-repeating elements. e.g. (1, 2, 3, 1, 2, 3...).
+;; Does not work on the list of form (1, 2, 3, 4, 5, 6, 4, 5, 6...)
 (define (cycles? list)
   (define (helper x)
     (let ((fst (car x))
@@ -336,11 +338,122 @@
   (helper list))
 
 
+;; To detect a cycle of the second form, we use Floyd's Tortoise and Hare algorithm
+
+(define (contain-cycle? lst)
+  (define (safe-cdr l)
+    (if (pair? l)
+        (cdr l)
+        '()))
+  (define (iter a b)
+    (cond ((not (pair? a)) false)
+          ((not (pair? b)) false)
+          ((eq? a b) true)
+          ((eq? a (safe-cdr b)) true)
+          (else (iter (safe-cdr a) (safe-cdr (safe-cdr b))))
+          ))
+  (iter (safe-cdr lst) (safe-cdr (safe-cdr list))))
+
+;; Implementing a Queue
+
+;; front and rear pointers
+(define (front-ptr q) (car q))
+(define (rear-ptr q) (cdr q))
+
+(define (set-front-ptr! queue item)
+  (set-car! queue item))
+
+(define (set-rear-ptr! queue item)
+  (set-cdr! queue item))
 
 
+(define (empty-q? q)
+  (null? (front-ptr q)))
+
+(define (make-q)
+  (cons '() '()))
+
+(define (front-q queue)
+  (if (empty-q? queue)
+      (error "FRONT called with an empty Queue")
+      (car (front-q queue))))
+
+(define (insert-q! queue item)
+  (let ((new-pair (cons item '())))
+    (cond ((empty-q? queue)
+           (set-front-ptr! queue new-pair)
+           (set-rear-ptr! queue new-pair)
+           queue)
+          (else
+           (set-cdr! (rear-ptr queue) new-pair)
+           (set-rear-ptr! queue new-pair)
+           queue))))
+
+(define (delete-q! queue)
+  (cond ((empty-q? queue)
+         (error "DELETE! called with an empty queue"))
+        (else
+         (set-front-ptr! queue (cdr (front-ptr queue)))
+         queue)
+        ))
+
+;; Exercise 3.21
+
+(define (print-q queue)
+  (front-ptr queue))
 
 
+;; Exercise 3.22
 
+
+;; do it again, much simpler if we use two lists each for front-ptr and rear-ptr
+(define (make-q2)
+  (let ((list '()))
+    (let ((front-ptr list)
+          (rear-ptr list))
+      (define (empty-q?) (null? list))
+      (define (set-front-ptr! new-item)
+        (cond ((empty-q?)
+               (set! list (cons new-item list))
+               (set! front-ptr new-item)
+               (set! rear-ptr new-item))
+              (else
+               (set! list (cons new-item list))
+               (set! front-ptr new-item))))
+      (define (set-rear-ptr! new-item)
+        (begin (set-cdr! rear-ptr new-item)
+               (set! rear-ptr new-item)))
+      (define (delete-q!)
+        (if (empty-q?)
+            (error "DELETE! called on empty list")
+            (begin (set! list (cdr list))
+                   (if (not (empty-q?))
+                       (set! front-ptr (car list))
+                       (begin (set! front-ptr list)
+                              (set! rear-ptr list))))))
+      (define (dispatch m)
+        (cond ((eq? m 'empty-q?) (empty-q?))
+              ((eq? m 'front-ptr) front-ptr)
+              ((eq? m 'rear-ptr) rear-ptr)
+              ((eq? m 'set-front-ptr!) set-front-ptr!)
+              ((eq? m 'set-rear-ptr!) set-rear-ptr!)
+              ((eq? m 'delete-q!) (delete-q!))
+              (else (error "Unknown operation"))))
+      dispatch)))
+
+
+(define (empty-q2? z) (z 'empty-q?))
+(define (front-q2 z) (z 'front-ptr))
+(define (rear-q2 z) (z 'rear-ptr))
+(define (set-front-ptr2! q) (q 'set-front-ptr!))
+(define (set-rear-ptr2! q) (q 'set-rear-ptr!))
+
+(define (insert-q2 queue item)
+  ((set-front-ptr2! queue) item))
+
+
+(define (delete-q2 queue item)
+  (set-front-ptr2! queue ))
 
 
 
