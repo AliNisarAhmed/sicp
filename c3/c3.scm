@@ -406,62 +406,99 @@
 ;; Exercise 3.22
 
 
-;; do it again, much simpler if we use two lists each for front-ptr and rear-ptr
-(define (make-q2)
-  (let ((list '()))
-    (let ((front-ptr list)
-          (rear-ptr list))
-      (define (empty-q?) (null? list))
-      (define (set-front-ptr! new-item)
+(define (make-queue)
+  (let ((front-ptr '())
+        (rear-ptr '()))
+    (define (empty-q?)
+      (null? front-ptr))
+    (define (insert-q item)
+      (let ((new-item (cons item '())))
         (cond ((empty-q?)
-               (set! list (cons new-item list))
                (set! front-ptr new-item)
                (set! rear-ptr new-item))
               (else
-               (set! list (cons new-item list))
-               (set! front-ptr new-item))))
-      (define (set-rear-ptr! new-item)
-        (begin (set-cdr! rear-ptr new-item)
-               (set! rear-ptr new-item)))
-      (define (delete-q!)
-        (if (empty-q?)
-            (error "DELETE! called on empty list")
-            (begin (set! list (cdr list))
-                   (if (not (empty-q?))
-                       (set! front-ptr (car list))
-                       (begin (set! front-ptr list)
-                              (set! rear-ptr list))))))
-      (define (dispatch m)
-        (cond ((eq? m 'empty-q?) (empty-q?))
-              ((eq? m 'front-ptr) front-ptr)
-              ((eq? m 'rear-ptr) rear-ptr)
-              ((eq? m 'set-front-ptr!) set-front-ptr!)
-              ((eq? m 'set-rear-ptr!) set-rear-ptr!)
-              ((eq? m 'delete-q!) (delete-q!))
-              (else (error "Unknown operation"))))
-      dispatch)))
+               (set-cdr! rear-ptr new-item)
+               (set! rear-ptr new-item)))))
+    (define (delete-q)
+      (cond ((empty-q?) (error "Can't call delete on emtpy"))
+            (else (set! front-ptr (cdr front-ptr)))
+            ))
+    (define (print)
+      front-ptr)
+    (define (dispatch m)
+      (cond ((eq? m 'empty-q?) (empty-q?))
+            ((eq? m 'insert-q) insert-q)
+            ((eq? m 'print) (print))
+            ((eq? m 'delete-q) (delete-q))
+            ))
+    dispatch))
 
 
-(define (empty-q2? z) (z 'empty-q?))
-(define (front-q2 z) (z 'front-ptr))
-(define (rear-q2 z) (z 'rear-ptr))
-(define (set-front-ptr2! q) (q 'set-front-ptr!))
-(define (set-rear-ptr2! q) (q 'set-rear-ptr!))
+(define (empty-q2? q) (q 'empty-q?))
+(define (insert-q2 q item) ((q 'insert-q) item))
+(define (print-q2 q) (q 'print))
+(define (delete-q2 q) (q 'delete-q))
 
-(define (insert-q2 queue item)
-  ((set-front-ptr2! queue) item))
+(define my-q (make-queue))
 
 
-(define (delete-q2 queue item)
-  (set-front-ptr2! queue ))
+;; Exercise 3.23
 
+;; double ended queue called dequeue in the book
 
+(define (make-dq)
+  (cons '() '()))
 
+(define (front-dq q) (car q))
+(define (rear-dq q) (cdr q))
 
+(define (empty-dq? q) (null? (front-dq q)))
 
+(define (front-insert-dq! q item)
+  (cond ((empty-dq? q)
+         (let ((new-item (cons item '())))
+           (begin (set-car! q new-item)
+                  (set-cdr! q new-item))))
+        (else
+         (let ((new-item (cons item (front-dq q))))
+           (set-car! q new-item)))
+        ))
 
+(define (rear-insert-dq! q item)
+  (cond ((empty-dq? q)
+         (let ((new-item (cons item '())))
+           (begin (set-car! q new-item)
+                  (set-cdr! q new-item)
+                  (set-cdr! (rear-dq q) new-item))))
+        (else
+         (let ((new-item (cons item '()))
+               (last (rear-dq q)))
+           (begin (set-cdr! last new-item)
+                  (set-cdr! new-item last)
+                  (set-cdr! q new-item)
+                  )))))
 
+(define (front-delete-dq! q)
+  (cond ((empty-dq? q)
+         (error "Delete called with empty D-Queue"))
+        (else
+         (let ((next (cdr (front-dq q))))
+          (set-car! q next)))
+        ))
 
+(define (rear-delete-dq! q)
+  (cond ((empty-dq? q)
+         (error "Delete called with empty dq"))
+        (else
+         (set-car! (rear-dq q) '()))
+        ))
+
+(define my-dq (make-dq))
+
+(front-insert-dq! my-dq 'a)
+(front-insert-dq! my-dq 'b)
+(front-insert-dq! my-dq 'c)
+(front-insert-dq! my-dq 'd)
 
 
 
