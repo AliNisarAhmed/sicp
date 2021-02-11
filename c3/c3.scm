@@ -452,6 +452,12 @@
 (define (front-dq q) (car q))
 (define (rear-dq q) (cdr q))
 
+(define (set-front-dq! q item)
+  (set-car! q item))
+
+(define (set-rear-dq! q item)
+  (set-cdr! q item))
+
 (define (empty-dq? q) (null? (front-dq q)))
 
 (define (front-insert-dq! q item)
@@ -459,6 +465,10 @@
          (let ((new-item (cons item '())))
            (begin (set-car! q new-item)
                   (set-cdr! q new-item))))
+        ((= 1 (length (front-dq q)))
+         (let ((new-item (cons item (front-dq q))))
+           (set-front-dq! q new-item)
+           (set-cdr! q (cons (rear-dq q) item))))
         (else
          (let ((new-item (cons item (front-dq q))))
            (set-car! q new-item)))
@@ -468,15 +478,19 @@
   (cond ((empty-dq? q)
          (let ((new-item (cons item '())))
            (begin (set-car! q new-item)
-                  (set-cdr! q new-item)
-                  (set-cdr! (rear-dq q) new-item))))
+                  (set-cdr! q new-item))))
+        ((= 1 (length (front-dq q)))
+         (let ((new-item (cons item '())))
+           (set-cdr! (rear-ptr q) new-item)
+           (set-cdr! new-item (rear-ptr q))
+           (set-rear-ptr! q new-item)
+           ))
         (else
-         (let ((new-item (cons item '()))
-               (last (rear-dq q)))
-           (begin (set-cdr! last new-item)
-                  (set-cdr! new-item last)
-                  (set-cdr! q new-item)
-                  )))))
+         (let ((new-item (cons item '())))
+           (set-cdr! (rear-ptr q) new-item)
+           (set-cdr! new-item (rear-ptr q))
+           (set-rear-ptr! q new-item)
+           ))))
 
 (define (front-delete-dq! q)
   (cond ((empty-dq? q)
@@ -495,10 +509,15 @@
 
 (define my-dq (make-dq))
 
+#|
+
 (front-insert-dq! my-dq 'a)
 (front-insert-dq! my-dq 'b)
 (front-insert-dq! my-dq 'c)
 (front-insert-dq! my-dq 'd)
+
+
+|#
 
 
 

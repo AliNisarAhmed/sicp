@@ -95,3 +95,9 @@
   (if (null? (cdr list))
       list
       (last-pair (cdr list))))
+
+(define (memq item x)
+  (cond ((null? x) false)
+        ((eq? item (car x)) x)
+        (else (memq item (cdr x)))
+        ))
