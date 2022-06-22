@@ -1,1 +1,0 @@
-("7.8" racket ("e66fe6f6ab87654984615f86079a06909bc8095d" . "afb30eea113a2248b222a12dffb568f11a0a75f5") #"C:\\web-dev\\sicp\\c2\\..\\lib.scm" (collects #"errortrace" #"errortrace-key.rkt") (collects #"sicp" #"lang" #"reader.rkt") (collects #"sicp" #"main.rkt"))
