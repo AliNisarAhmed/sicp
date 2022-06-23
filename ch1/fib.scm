@@ -247,3 +247,64 @@
 (define (f n) (A 0 n)) ; double n
 (define (g n) (A 1 n)) ; 2 ^ n
 (define (h n) (A 2 n)) ; 2 ^ 2 ^ 2 ^ ... (n times)
+
+
+; ----------------------------------------------------------------------
+
+; Tree recursion
+
+(define (fib-rec n)
+  (cond ((= n 0) 0)
+        ((= n 1) 1)
+        (else (+ (fib-rec (- n 1))
+                 (fib-rec (- n 2))))))
+
+(define (fib-iter n)
+  (define (fib-iter-2 a b count)
+    (if (= count 0)
+        b
+        (fib-iter-2 (+ a b) a (- count 1))))
+  (fib-iter-2 1 0 n))
+
+; Count change
+
+(define (count-change amount)
+  (cc amount 5))
+
+(define (cc amount kinds) ; kinds = kinds of coins
+  (cond ((= amount 0) 1)
+        ((or (< amount 0) (= kinds 0)) 0)
+        (else (+
+               (cc amount (- kinds 1))
+               (cc (- amount (first-den kinds)) kinds)))))
+
+(define (first-den kinds) ; first-den = first denomination of kinds of coins
+  (cond ((= kinds 1) 1)
+        ((= kinds 2) 5)
+        ((= kinds 3) 10)
+        ((= kinds 4) 25)
+        ((= kinds 5) 50)))
+
+;---------------------------------------------------
+; Ex 1.11
+;---------------------------------------------------
+
+; f(n) = n if n < 3
+; f(n) = f(n - 1) + 2f(n - 2) + 3f(n - 3)
+
+; Recursive
+
+(define (fn n)
+  (cond ((< n 3) n)
+        (else (+
+               (fn (- n 1))
+               (* 2 (fn (- n 2)))
+               (* 3 (fn (- n 3)))))))
+
+; Iterative
+(define (fn-2 n)
+  (define (f-iter a b c count)
+    (cond ((< n 3) n)
+          ((<= count 0) a)
+          (else (f-iter (+ a (* 2 b) (* 3 c)) a b (- count 1)))))
+  (f-iter 2 1 0 (- n 2)))
