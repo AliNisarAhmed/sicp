@@ -308,3 +308,101 @@
           ((<= count 0) a)
           (else (f-iter (+ a (* 2 b) (* 3 c)) a b (- count 1)))))
   (f-iter 2 1 0 (- n 2)))
+
+;---------------------------------------------------
+; Ex 1.12
+;---------------------------------------------------
+
+(define (pascal row col)
+  (cond ((<= row col) 1)
+        ((= col 1) 1)
+        (else (+
+               (pascal (- row 1) (- col 1))
+               (pascal (- row 1) col)))))
+
+
+;---------------------------------------------------
+; Ex 1.15
+;---------------------------------------------------
+
+(define (cube x) (* x x x))
+
+(define (p x)
+  (- (* 3 x) (* 4 (cube x))))
+
+(define (sine angle)
+  (if (not (> (abs angle) 0.1))
+      angle
+      (p (sine (/ angle 3.0)))))
+
+; sine 12.15
+; (p (sine 4.05))
+; (p (p (sine 1.35))
+; (p (p (p (sine 0.45))))
+; (p (p (p (p (sine 0.15)))))
+; (p (p (p (p (p (sine 0.05))))
+; (p (p (p (p (p 0.05)))))
+
+; How many times p is applied
+; we divide angle each time by 3, so if we were reaching for (< 1), the answer would be log3 12.15
+; but since we keep dividing till we reach (< 0.1), the answer would be ceil(log 3 (12.15 / 0.1)) = 5
+
+; Space and Tiem growth
+; Both are O(log3 a) for (sine a)
+
+
+
+;---------------------------------------------------
+; Ex 1.16
+;---------------------------------------------------
+
+(define (fast-exp b n)
+  (cond ((= n 0) 1)
+        ((even? n) (square (fast-exp b  (/ n 2))))
+        (else (* b (fast-exp b (- n 1))))))
+
+; (define (even? n)
+  ; (= (remainder n 2) 0))
+
+; Iterative fast exponentiation 
+(define (fast-exp-2 b n)
+  (define (iter b n r)
+    (cond ((= n 0) r)
+          ((even? n) (iter (square b) (/ n 2) r))
+          (else (iter b (- n 1) (* r b)))))
+  (iter b n 1))
+
+
+;---------------------------------------------------
+; Ex 1.17
+;---------------------------------------------------
+
+(define (mult a b)
+  (if (= b 0)
+      0
+      (+ a (mult a (- b 1)))))
+
+(define (double x)
+  (* x 2))
+
+(define (halve x)
+  (/ x 2))
+
+(define (mult-fast a b)
+  (cond ((= b 0) 0)
+        ((even? b) (double (mult-fast a (halve b))))
+        (else (+ a (mult a (- b 1))))))
+
+
+;---------------------------------------------------
+; Ex 1.18
+;---------------------------------------------------
+
+; iterative fast mult
+
+(define (mult-fast-2 a b)
+  (define (iter a b acc)
+    (cond ((= b 0) acc)
+          ((even? b) (iter (double a) (halve b) acc))
+          (else (iter a (- b 1) (+ acc a)))))
+  (iter a b 0))
