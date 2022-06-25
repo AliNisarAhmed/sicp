@@ -1,0 +1,1 @@
+("8.5" ta6le ("4012794bdf4d397c9fea68647129101a3848cbb1" . "eb559ed962d721824abc79867f055b608dc898cb") (collects #"errortrace" #"errortrace-key.rkt") (collects #"r5rs" #"init.rkt") (collects #"r5rs" #"lang" #"reader.rkt") (collects #"r5rs" #"main.rkt") (collects #"racket" #"base.rkt") (collects #"racket" #"runtime-config.rkt"))

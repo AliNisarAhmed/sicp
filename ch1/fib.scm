@@ -1,4 +1,8 @@
+#lang scheme
+
 ; https://stackoverflow.com/questions/903968/how-do-i-execute-a-scm-script-outside-of-the-repl-with-mit-scheme
+
+(#%require "../lib.scm")
 
 (define (fib n)
 	(if (< n 2)
@@ -68,14 +72,14 @@
 
 (define (average x y) (/ (+ x y) 2))
 
-(define (good_enough? guess x)
+(define (good-enough? guess x)
   (< (abs (- (square guess) x)) 0.001))
 
 (define (square-root x)
   (sqrt-iter 1.0 x))
 
 (define (sqrt-iter guess x)
-  (if (good_enough? guess x)
+  (if (good-enough? guess x)
       guess
       (sqrt-iter (improve guess x) x)))
 
@@ -107,10 +111,10 @@
 ; Ex 1.7
 ;---------------------------------------------------
 
-(define (sqrt-iter-2 guess new-guess x)
+(define (sqrt-iter-3 guess new-guess x)
   (if (good-enough-3? guess new-guess)
       new-guess
-      (sqrt-iter-2 new-guess (improve new-guess x) x)))
+      (sqrt-iter-3 new-guess (improve new-guess x) x)))
 
 (define (good-enough-2? guess new-guess)
   (<
@@ -148,6 +152,12 @@
 ;---------------------------------------------------
 ; Ex 1.9
 ;---------------------------------------------------
+
+(define (inc n)
+  (+ 1 n))
+
+(define (dec n)
+  (- n 1))
 
 (define (pluss a b)
   (if (= a 0)
@@ -244,7 +254,7 @@
 ; (A 2 4)
 ; see above tree!
 
-(define (f n) (A 0 n)) ; double n
+(define (k n) (A 0 n)) ; double n
 (define (g n) (A 1 n)) ; 2 ^ n
 (define (h n) (A 2 n)) ; 2 ^ 2 ^ 2 ^ ... (n times)
 
@@ -327,7 +337,7 @@
 
 (define (cube x) (* x x x))
 
-(define (p x)
+(define (pp x)
   (- (* 3 x) (* 4 (cube x))))
 
 (define (sine angle)
@@ -406,3 +416,145 @@
           ((even? b) (iter (double a) (halve b) acc))
           (else (iter a (- b 1) (+ acc a)))))
   (iter a b 0))
+
+;---------------------------------------------------
+; Ex 1.19
+;---------------------------------------------------
+
+(define (fib-a n)
+  (fib-a-iter 1 0 0 1 n))
+
+(define (fib-a-iter a b p q count)
+  (cond ((= count 0) b)
+        ((even? count)
+         (fib-a-iter a
+                     b
+                     (+ (square p) (square q))
+                     (+ (* 2 p q) (square q))
+                     (/ count 2)))
+        (else (fib-a-iter
+               (+ (* b q) (* a q) (* a p))
+               (+ (* b p) (* a q))
+               p
+               q
+               (- count 1)))))
+
+
+; ----------------------------------------------------------------------------
+
+(define (gcd-2 a b)
+  (if (= b 0)
+      a
+      (gcd-2 b (remainder a b))))
+
+;---------------------------------------------------
+; Ex 1.20
+;---------------------------------------------------
+
+; applicative order
+
+;(gcd 206 40)
+;(gcd 40 (remainder 206 40))
+;(gcd 40 6)
+;(gcd 6 (remainder 40 6))
+;(gcd 6 4)
+;(gcd 4 (remainder 6 4))
+;(gcd 4 2)
+;(gcd 2 (remainder 4 2))
+;(gcd 2 0)
+;2
+
+; normal order
+;(gcd 206 40)
+;(if (= 40 0)...)
+;(gcd 40 (remainder 206 40))
+;(if (= (remainder 206 40) 0)...  -> 6
+;(gcd (remainder 206 40) (remainder 40 (remainder 206 40)))
+;(if (= (remainder 40 (remainder 206 40)) 0)... -> 4
+;(gcd (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40))))
+;(if (= (remainder (remainder 206 40) (remainder 40 (remainder 206 40))) 0)) -> 2
+
+
+
+ 
+; In applicative order, there were only 4 calls to remainder
+; while in normal order, there were 18 calls to remainder!!!
+; the formula is R(n) = SUM(i from 1 to n, fib(i + 1) - 1) + fib(n) - 1
+
+
+; -------------------------------------------------------------------------------
+
+(define (smallest-divisor n)
+  (find-divisor n 2))
+
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor n (+ 1 test-divisor)))))
+
+(define (divides? div n)
+  (= 0 (remainder n div)))
+
+(define (prime? n)
+  (= (smallest-divisor n) n))
+
+; The above function is O(sqrt(n))
+
+; Probabilistic algorithm for primality
+
+; based on Fermat's Little Theorem
+
+; if n is a prime number and a is any +ve integer < n,
+  ; then a raised to n
+  ; is congruent to
+  ; a modulo n
+
+; if n is not prime, most of the numbers will not satisfy the above theorem
+
+; Algo for testing primality based on above
+;  Given a number n, pick a number a < n
+;  compute a^n modulo n
+;  if the result is not equal to a, then n is not prime
+;  if it is equal, there is a chance that n is prime
+;  keep picking numbers and doing the above test to increase the change that n is prime
+
+; e.g. (expmod a 59 59) == a for any a < 59, proving that 59 is prime
+
+(define (expmod base exp m)
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (remainder (square (expmod base (/ exp 2) m)) m))
+        (else
+         (remainder (* base (expmod base (- exp 1) m))
+                    m))))
+
+(define (fermat-test n)
+  (define (try-it a)
+    (= (expmod a n n) a))
+  (try-it (+ 1 (random (- n 1)))))
+
+(define (fast-prime? n times)
+  (cond ((= times 0) true)
+        ((fermat-test n) (fast-prime? n (- times 1)))
+        (else false)))
+
+;---------------------------------------------------
+; Ex 1.22
+;---------------------------------------------------
+
+(define (current-mils)
+  (current-inexact-milliseconds))
+
+(define (timed-prime-test n)
+  (newline)
+  (display n)
+  (start-prime-test n (current-mils)))
+
+(define (start-prime-test n start-time)
+  (if (prime? n)
+      (report-prime (- (current-mils) start-time))
+      (display "- not a prime")))
+
+(define (report-prime time)
+  (display " *** ")
+  (display time))
